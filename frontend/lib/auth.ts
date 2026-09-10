@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://192.168.1.41:8000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.41:8000";
 
 export function getAccessToken() {
   if (typeof window === "undefined") {
