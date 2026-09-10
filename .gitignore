@@ -7,7 +7,6 @@ ENV/
 
 *.sqlite3
 db.sqlite3
-media/
 
 .env
 .env.*
@@ -31,3 +30,4 @@ pnpm-debug.log*
 
 *.log
 tapformenu_backup.dump
+backend/media/restaurants/seaking-seafood-restaurant/reviews/
