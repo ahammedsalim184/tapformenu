@@ -160,9 +160,15 @@ class MenuCategorySerializer(serializers.ModelSerializer):
         )
 
 
+# ---------------------------------------------------------
+# PUBLIC MENU SERIALIZERS
+# ---------------------------------------------------------
+
 class PublicMenuItemVariantSerializer(
     serializers.ModelSerializer
 ):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = MenuItemVariant
         fields = (
@@ -175,10 +181,25 @@ class PublicMenuItemVariantSerializer(
             "price_max",
         )
 
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+
+        request = self.context.get("request")
+
+        if request:
+            return request.build_absolute_uri(
+                obj.image.url
+            )
+
+        return obj.image.url
+
 
 class PublicMenuItemSerializer(
     serializers.ModelSerializer
 ):
+    image = serializers.SerializerMethodField()
+
     variants = PublicMenuItemVariantSerializer(
         many=True,
         read_only=True,
@@ -199,6 +220,19 @@ class PublicMenuItemSerializer(
             "available",
             "variants",
         )
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+
+        request = self.context.get("request")
+
+        if request:
+            return request.build_absolute_uri(
+                obj.image.url
+            )
+
+        return obj.image.url
 
 
 class PublicMenuCategorySerializer(
