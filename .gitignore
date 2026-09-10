@@ -29,4 +29,5 @@ pnpm-debug.log*
 .vscode/
 .idea/
 
-*.logtapformenu_backup.dump
+*.log
+tapformenu_backup.dump
