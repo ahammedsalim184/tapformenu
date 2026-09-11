@@ -1,4 +1,5 @@
 import type { Restaurant } from "@/types/menu";
+import { getMediaUrl } from "@/lib/api";
 
 interface RestaurantHeaderProps {
   restaurant: Restaurant;
@@ -7,13 +8,15 @@ interface RestaurantHeaderProps {
 export default function RestaurantHeader({
   restaurant,
 }: RestaurantHeaderProps) {
+  const logoUrl = getMediaUrl(restaurant.logo);
+
   return (
     <header className="border-b border-gray-100 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <div className="flex items-center gap-3">
-          {restaurant.logo ? (
+          {logoUrl ? (
             <img
-              src={restaurant.logo}
+              src={logoUrl}
               alt={`${restaurant.name} logo`}
               className="h-12 w-12 rounded-full object-cover"
             />

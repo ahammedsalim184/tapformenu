@@ -1,3 +1,4 @@
+
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -17,9 +18,8 @@ import {
 } from "@/components/dashboard/menu/MenuTypes";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.41:8000";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
-  
 export default function RestaurantMenuPage() {
   const params = useParams();
   const router = useRouter();
@@ -43,20 +43,16 @@ export default function RestaurantMenuPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<MenuCategory | null>(null);
 
-  const [categoryName, setCategoryName] =
-    useState("");
-
+  const [categoryName, setCategoryName] = useState("");
   const [categoryDescription, setCategoryDescription] =
     useState("");
-
   const [categoryDisplayOrder, setCategoryDisplayOrder] =
     useState("0");
 
   const [savingCategory, setSavingCategory] =
     useState(false);
 
-  const [categoryError, setCategoryError] =
-    useState("");
+  const [categoryError, setCategoryError] = useState("");
 
   // ==================================================
   // DELETE CATEGORY STATE
@@ -86,24 +82,18 @@ export default function RestaurantMenuPage() {
   const [selectedItem, setSelectedItem] =
     useState<MenuItem | null>(null);
 
-  const [itemName, setItemName] =
-    useState("");
-
+  const [itemName, setItemName] = useState("");
   const [itemDescription, setItemDescription] =
     useState("");
-
   const [itemCategory, setItemCategory] =
     useState("");
 
   const [itemPriceRange, setItemPriceRange] =
     useState(false);
 
-  const [itemPrice, setItemPrice] =
-    useState("");
-
+  const [itemPrice, setItemPrice] = useState("");
   const [itemPriceMin, setItemPriceMin] =
     useState("");
-
   const [itemPriceMax, setItemPriceMax] =
     useState("");
 
@@ -197,6 +187,29 @@ export default function RestaurantMenuPage() {
   }
 
   // ==================================================
+  // SAFE JSON RESPONSE
+  // ==================================================
+
+  async function getResponseData(
+    response: Response
+  ) {
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if (
+      !contentType.includes("application/json")
+    ) {
+      const text = await response.text();
+
+      throw new Error(
+        `Server returned an unexpected response (${response.status}).`
+      );
+    }
+
+    return response.json();
+  }
+
+  // ==================================================
   // LOAD MENU
   // ==================================================
 
@@ -212,7 +225,7 @@ export default function RestaurantMenuPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/`,
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/`,
         {
           method: "GET",
           headers: {
@@ -235,13 +248,25 @@ export default function RestaurantMenuPage() {
       }
 
       if (!response.ok) {
-        throw new Error(
-          "Failed to load restaurant menu."
-        );
+        let message =
+          "Failed to load restaurant menu.";
+
+        try {
+          const data =
+            await getResponseData(response);
+
+          if (data?.detail) {
+            message = data.detail;
+          }
+        } catch {
+          // Keep default error message.
+        }
+
+        throw new Error(message);
       }
 
       const data: MenuResponse =
-        await response.json();
+        await getResponseData(response);
 
       setMenu(data);
     } catch (err) {
@@ -346,7 +371,7 @@ export default function RestaurantMenuPage() {
         selectedCategory
       ) {
         response = await fetch(
-          `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/categories/${selectedCategory.id}/`,
+          `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/${selectedCategory.id}/`,
           {
             method: "PATCH",
             headers: {
@@ -359,7 +384,7 @@ export default function RestaurantMenuPage() {
         );
       } else {
         response = await fetch(
-          `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/categories/`,
+          `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/`,
           {
             method: "POST",
             headers: {
@@ -377,7 +402,8 @@ export default function RestaurantMenuPage() {
         return;
       }
 
-      const data = await response.json();
+      const data =
+        await getResponseData(response);
 
       if (!response.ok) {
         if (
@@ -458,7 +484,7 @@ export default function RestaurantMenuPage() {
       setDeletingCategory(true);
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/categories/${categoryToDelete.id}/`,
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/${categoryToDelete.id}/`,
         {
           method: "DELETE",
           headers: {
@@ -478,13 +504,13 @@ export default function RestaurantMenuPage() {
 
         try {
           const data =
-            await response.json();
+            await getResponseData(response);
 
           if (data?.detail) {
             message = data.detail;
           }
         } catch {
-          // Ignore JSON parsing errors.
+          // Ignore response parsing errors.
         }
 
         throw new Error(message);
@@ -605,10 +631,6 @@ export default function RestaurantMenuPage() {
       String(item.display_order)
     );
 
-    // File inputs cannot be populated
-    // programmatically by the browser.
-    // Leave this empty so existing image
-    // remains unchanged if no new image is selected.
     setItemImage(null);
 
     setItemError("");
@@ -771,13 +793,11 @@ export default function RestaurantMenuPage() {
           "price_max",
           itemPriceMax
         );
-      } else {
-        if (itemPrice.trim()) {
-          formData.append(
-            "price",
-            itemPrice
-          );
-        }
+      } else if (itemPrice.trim()) {
+        formData.append(
+          "price",
+          itemPrice
+        );
       }
 
       formData.append(
@@ -805,7 +825,7 @@ export default function RestaurantMenuPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/items/`,
+        `${API_BASE_URL}/menus/items/`,
         {
           method: "POST",
           headers: {
@@ -821,7 +841,7 @@ export default function RestaurantMenuPage() {
       }
 
       const data =
-        await response.json();
+        await getResponseData(response);
 
       if (!response.ok) {
         if (
@@ -937,7 +957,6 @@ export default function RestaurantMenuPage() {
       );
 
       if (itemPriceRange) {
-        // Explicitly clear fixed price.
         formData.append(
           "price",
           ""
@@ -958,7 +977,6 @@ export default function RestaurantMenuPage() {
           itemPrice
         );
 
-        // Explicitly clear range values.
         formData.append(
           "price_min",
           ""
@@ -995,7 +1013,7 @@ export default function RestaurantMenuPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/items/${selectedItem.id}/`,
+        `${API_BASE_URL}/menus/items/${selectedItem.id}/`,
         {
           method: "PATCH",
           headers: {
@@ -1011,7 +1029,7 @@ export default function RestaurantMenuPage() {
       }
 
       const data =
-        await response.json();
+        await getResponseData(response);
 
       if (!response.ok) {
         if (
@@ -1098,7 +1116,7 @@ export default function RestaurantMenuPage() {
       setError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/items/${item.id}/`,
+        `${API_BASE_URL}/menus/items/${item.id}/`,
         {
           method: "DELETE",
           headers: {
@@ -1229,8 +1247,6 @@ export default function RestaurantMenuPage() {
       String(variant.display_order)
     );
 
-    // Existing image remains unchanged
-    // unless the user selects a new file.
     setVariantImage(null);
 
     setVariantError("");
@@ -1420,7 +1436,7 @@ export default function RestaurantMenuPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/`,
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/`,
         {
           method: "POST",
           headers: {
@@ -1436,7 +1452,7 @@ export default function RestaurantMenuPage() {
       }
 
       const data =
-        await response.json();
+        await getResponseData(response);
 
       if (!response.ok) {
         if (
@@ -1546,7 +1562,6 @@ export default function RestaurantMenuPage() {
       );
 
       if (variantPriceRange) {
-        // Explicitly clear fixed price.
         formData.append(
           "price",
           ""
@@ -1567,7 +1582,6 @@ export default function RestaurantMenuPage() {
           variantPrice
         );
 
-        // Explicitly clear range values.
         formData.append(
           "price_min",
           ""
@@ -1599,7 +1613,7 @@ export default function RestaurantMenuPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/${selectedVariant.id}/`,
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/${selectedVariant.id}/`,
         {
           method: "PATCH",
           headers: {
@@ -1615,7 +1629,7 @@ export default function RestaurantMenuPage() {
       }
 
       const data =
-        await response.json();
+        await getResponseData(response);
 
       if (!response.ok) {
         if (
@@ -1704,7 +1718,7 @@ export default function RestaurantMenuPage() {
       setError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menus/manage/${restaurantSlug}/items/${item.id}/variants/${variant.id}/`,
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${item.id}/variants/${variant.id}/`,
         {
           method: "DELETE",
           headers: {

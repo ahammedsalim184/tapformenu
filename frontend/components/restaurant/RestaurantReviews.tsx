@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReviewSection } from "@/types/menu";
+import { getMediaUrl } from "@/lib/api";
 
 interface RestaurantReviewsProps {
   review: ReviewSection | null;
@@ -18,7 +19,9 @@ export default function RestaurantReviews({
     review.video_2,
     review.video_3,
     review.video_4,
-  ].filter((video): video is string => Boolean(video));
+  ]
+    .map((video) => getMediaUrl(video))
+    .filter((video): video is string => Boolean(video));
 
   if (!review.description && videos.length === 0) {
     return null;
@@ -156,4 +159,3 @@ export default function RestaurantReviews({
     </section>
   );
 }
-

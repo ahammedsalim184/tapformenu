@@ -31,3 +31,8 @@ pnpm-debug.log*
 *.log
 tapformenu_backup.dump
 backend/media/restaurants/seaking-seafood-restaurant/reviews/
+.env
+.env.production
+tapformenu_backup.sql
+tapformenu_backup.sql
+!.env.production.example

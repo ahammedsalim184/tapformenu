@@ -1,17 +1,17 @@
+
 "use client";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.41:8000";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,26 +22,21 @@ export default function LoginPage() {
     setError("");
 
     try {
-      console.log("Attempting login...");
-      console.log(
-        "Login URL:",
-        `${API_BASE_URL}/api/accounts/login/`
-      );
+      const loginUrl = `${API_BASE_URL}/accounts/login/`;
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/accounts/login/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            username: username.trim(),
-            password,
-          }),
-        }
-      );
+      console.log("Login URL:", loginUrl);
+
+      const response = await fetch(loginUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+        }),
+      });
 
       console.log("Login response status:", response.status);
 
@@ -54,6 +49,7 @@ export default function LoginPage() {
         data = await response.json();
       } else {
         const text = await response.text();
+
         console.error("Non-JSON response:", text);
 
         throw new Error(
@@ -88,7 +84,7 @@ export default function LoginPage() {
 
       if (error instanceof TypeError) {
         setError(
-          "Unable to connect to the server. Make sure Django is running and your phone is connected to the same Wi-Fi."
+          "Unable to connect to the server. Make sure Django is running."
         );
       } else {
         setError(

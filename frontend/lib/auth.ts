@@ -1,5 +1,6 @@
+
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.41:8000";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export function getAccessToken() {
   if (typeof window === "undefined") {
@@ -30,7 +31,7 @@ export async function getCurrentUser() {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/accounts/me/`,
+    `${API_BASE_URL}/accounts/me/`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

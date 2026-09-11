@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.41:8000";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 interface Restaurant {
   id: number;
@@ -26,7 +27,9 @@ export default function RestaurantDashboardPage() {
 
   const restaurantSlug = params.restaurant as string;
 
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [restaurant, setRestaurant] =
+    useState<Restaurant | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,7 +44,7 @@ export default function RestaurantDashboardPage() {
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/restaurants/${restaurantSlug}/`,
+          `${API_BASE_URL}/restaurants/${restaurantSlug}/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -50,11 +53,23 @@ export default function RestaurantDashboardPage() {
           }
         );
 
-        const data = await response.json();
+        const contentType =
+          response.headers.get("content-type") || "";
+
+        let data: any = {};
+
+        if (contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          throw new Error(
+            `Server returned an unexpected response (${response.status}).`
+          );
+        }
 
         if (response.status === 401) {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
+
           router.replace("/login");
           return;
         }
@@ -84,7 +99,9 @@ export default function RestaurantDashboardPage() {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-          <p className="text-gray-500">Loading restaurant...</p>
+          <p className="text-gray-500">
+            Loading restaurant...
+          </p>
         </div>
       </main>
     );
@@ -158,10 +175,12 @@ export default function RestaurantDashboardPage() {
             </h2>
 
             <div className="mt-5 space-y-4">
+
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Name
                 </p>
+
                 <p className="mt-1 text-sm text-gray-900">
                   {restaurant.name}
                 </p>
@@ -171,6 +190,7 @@ export default function RestaurantDashboardPage() {
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Slug
                 </p>
+
                 <p className="mt-1 text-sm text-gray-900">
                   {restaurant.slug}
                 </p>
@@ -180,10 +200,13 @@ export default function RestaurantDashboardPage() {
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Description
                 </p>
+
                 <p className="mt-1 text-sm text-gray-600">
-                  {restaurant.description || "No description added."}
+                  {restaurant.description ||
+                    "No description added."}
                 </p>
               </div>
+
             </div>
           </section>
 
@@ -194,6 +217,7 @@ export default function RestaurantDashboardPage() {
             </h2>
 
             <div className="mt-5 space-y-4">
+
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Menu Layout
@@ -210,7 +234,9 @@ export default function RestaurantDashboardPage() {
                 </p>
 
                 <p className="mt-1 text-sm text-gray-900">
-                  {restaurant.active ? "Active" : "Inactive"}
+                  {restaurant.active
+                    ? "Active"
+                    : "Inactive"}
                 </p>
               </div>
 
@@ -223,6 +249,7 @@ export default function RestaurantDashboardPage() {
                   {restaurant.role}
                 </p>
               </div>
+
             </div>
           </section>
 
@@ -231,6 +258,7 @@ export default function RestaurantDashboardPage() {
         {/* Management Sections */}
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
+          {/* Menu */}
           <button
             onClick={() =>
               router.push(
@@ -252,6 +280,7 @@ export default function RestaurantDashboardPage() {
             </p>
           </button>
 
+          {/* Settings */}
           <button
             onClick={() =>
               router.push(
