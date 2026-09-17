@@ -17,38 +17,45 @@ export default function MenuCategoryNav({
   const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!navRef.current) return;
-
     const container = navRef.current;
 
-    const categoryElements = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        "[data-category-index]"
-      )
-    );
+    if (!container) return;
 
-    const activeElement = categoryElements[activeCategory];
+    // Do not move the navigation when the page
+    // initially loads on the first category.
+    if (activeCategory === 0) {
+      return;
+    }
+
+    const activeElement = container.querySelector<HTMLElement>(
+      `[data-category-index="${activeCategory}"]`
+    );
 
     if (!activeElement) return;
 
     const containerRect = container.getBoundingClientRect();
     const elementRect = activeElement.getBoundingClientRect();
 
-    const leftLimit = containerRect.left + 16;
-    const rightLimit = containerRect.right - 40;
+    /*
+     * MOBILE
+     *
+     * Move the selected category toward
+     * the centre of the phone screen.
+     */
+    const isMobile = window.innerWidth < 640;
 
-    if (
-      elementRect.right >= rightLimit - 20 &&
-      activeCategory < categoryElements.length - 1
-    ) {
-      const nextElement = categoryElements[activeCategory + 1];
-      const nextRect = nextElement.getBoundingClientRect();
+    if (isMobile) {
+      const containerCenter =
+        containerRect.left + containerRect.width / 2;
 
-      const amount = nextRect.right - rightLimit + 24;
+      const elementCenter =
+        elementRect.left + elementRect.width / 2;
 
-      if (amount > 0) {
+      const distance = elementCenter - containerCenter;
+
+      if (Math.abs(distance) > 4) {
         container.scrollBy({
-          left: amount,
+          left: distance,
           behavior: "smooth",
         });
       }
@@ -56,41 +63,32 @@ export default function MenuCategoryNav({
       return;
     }
 
-    if (
-      elementRect.left <= leftLimit + 20 &&
-      activeCategory > 0
-    ) {
-      const previousElement = categoryElements[activeCategory - 1];
-      const previousRect = previousElement.getBoundingClientRect();
+    /*
+     * TABLET / DESKTOP
+     *
+     * Only scroll when the selected category
+     * is outside the visible area.
+     */
+    const padding = 40;
 
-      const amount = previousRect.left - leftLimit - 24;
-
-      if (amount < 0) {
-        container.scrollBy({
-          left: amount,
-          behavior: "smooth",
-        });
-      }
-
-      return;
-    }
-
-    if (elementRect.right > containerRect.right) {
+    if (elementRect.right > containerRect.right - padding) {
       container.scrollBy({
         left:
           elementRect.right -
           containerRect.right +
-          24,
+          padding,
         behavior: "smooth",
       });
+
+      return;
     }
 
-    if (elementRect.left < containerRect.left) {
+    if (elementRect.left < containerRect.left + padding) {
       container.scrollBy({
         left:
           elementRect.left -
           containerRect.left -
-          24,
+          padding,
         behavior: "smooth",
       });
     }
@@ -101,52 +99,31 @@ export default function MenuCategoryNav({
   }
 
   return (
-    <nav className="sticky top-0 z-30 w-full bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-        <div
-          className="
-            relative
-            overflow-hidden
-            rounded-b-2xl
-            border
-            border-t-0
-            border-gray-100
-            bg-white/95
-            shadow-sm
-            backdrop-blur-md
-            sm:rounded-b-[20px]
-          "
-        >
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-0
-              top-0
-              z-20
-              h-full
-              w-6
-              bg-gradient-to-r
-              from-white
-              to-transparent
-              sm:hidden
-            "
-          />
+    <nav
+      aria-label="Menu categories"
+      className="
+        sticky
+        top-0
+        z-40
+        w-full
+        border-b
+        border-gray-100
+        bg-white/95
+        backdrop-blur-xl
+      "
+    >
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="relative">
 
+          {/* Category scrolling area */}
           <div
             ref={navRef}
             className="
-              flex
               w-full
-              items-center
-              justify-start
-              gap-2
               overflow-x-auto
-              px-0
-              py-2
-              sm:justify-center
-              sm:gap-2.5
-              sm:py-2.5
+              scroll-smooth
+              overscroll-x-contain
+              touch-pan-x
               [&::-webkit-scrollbar]:hidden
             "
             style={{
@@ -154,72 +131,136 @@ export default function MenuCategoryNav({
               msOverflowStyle: "none",
             }}
           >
-            {categories.map((category, index) => {
-              const isActive = activeCategory === index;
+            {/* Category row */}
+            <div
+              className="
+                flex
+                w-max
+                min-w-full
+                items-center
+                justify-start
+                gap-7
+                px-6
+                py-4
 
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  data-category-index={index}
-                  onClick={() => onCategoryChange(index)}
-                  className={`
-                    relative
-                    shrink-0
-                    rounded-full
-                    border
-                    px-3.5
-                    py-2
-                    text-[11px]
-                    font-semibold
-                    tracking-wide
-                    whitespace-nowrap
-                    transition-all
-                    duration-300
-                    active:scale-95
-                    sm:px-4
-                    sm:py-2
-                    sm:text-[12px]
-                    lg:px-5
-                    ${
-                      isActive
-                        ? `
-                          border-sky-200
-                          bg-sky-50
-                          text-gray-900
-                          shadow-sm
-                          shadow-sky-100
-                        `
-                        : `
-                          border-gray-200
-                          bg-white
-                          text-gray-500
-                          hover:border-sky-200
-                          hover:bg-sky-50
-                          hover:text-gray-900
-                        `
+                sm:gap-9
+                sm:px-8
+                sm:py-5
+
+                lg:justify-center
+                lg:gap-12
+                lg:px-10
+              "
+            >
+              {categories.map((category, index) => {
+                const isActive = activeCategory === index;
+
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    data-category-index={index}
+                    aria-current={
+                      isActive ? "true" : undefined
                     }
-                  `}
-                >
-                  {category.name}
-                </button>
-              );
-            })}
+                    aria-label={`Show ${category.name}`}
+                    onClick={() =>
+                      onCategoryChange(index)
+                    }
+                    className="
+                      group
+                      relative
+                      shrink-0
+                      whitespace-nowrap
+                      px-1
+                      pb-3
+                      pt-1
+                      text-[15px]
+                      font-medium
+                      tracking-[-0.01em]
+                      transition-all
+                      duration-200
+                      ease-out
+                      focus:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-black/30
+                      focus-visible:ring-offset-4
+                      active:scale-[0.97]
+                      sm:text-base
+                    "
+                  >
+                    <span
+                      className={`
+                        transition-colors
+                        duration-200
+                        ${
+                          isActive
+                            ? "font-semibold text-black"
+                            : "text-gray-400 group-hover:text-gray-700"
+                        }
+                      `}
+                    >
+                      {category.name}
+                    </span>
+
+                    {/* Black active underline */}
+                    <span
+                      aria-hidden="true"
+                      className={`
+                        absolute
+                        bottom-0
+                        left-1/2
+                        h-[3px]
+                        -translate-x-1/2
+                        rounded-full
+                        bg-black
+                        transition-all
+                        duration-300
+                        ease-out
+                        ${
+                          isActive
+                            ? "w-full opacity-100"
+                            : "w-0 opacity-0"
+                        }
+                      `}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Left fade */}
           <div
+            aria-hidden="true"
             className="
               pointer-events-none
               absolute
+              inset-y-0
+              left-0
+              z-10
+              w-8
+              bg-gradient-to-r
+              from-white
+              to-transparent
+              sm:w-12
+            "
+          />
+
+          {/* Right fade */}
+          <div
+            aria-hidden="true"
+            className="
+              pointer-events-none
+              absolute
+              inset-y-0
               right-0
-              top-0
-              z-20
-              h-full
-              w-6
+              z-10
+              w-8
               bg-gradient-to-l
               from-white
               to-transparent
-              sm:hidden
+              sm:w-12
             "
           />
         </div>

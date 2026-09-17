@@ -1,4 +1,5 @@
 import type { MenuCategory } from "@/types/menu";
+import { getMediaUrl } from "@/lib/api";
 
 interface ShowcaseMenuProps {
   categories: MenuCategory[];
@@ -11,11 +12,11 @@ function formatPrice(
   priceMax: string | null
 ) {
   if (priceRange && priceMin && priceMax) {
-    return `₹${priceMin} - ₹${priceMax}`;
+    return `₹${parseFloat(priceMin)} - ₹${parseFloat(priceMax)}`;
   }
 
   if (price) {
-    return `₹${price}`;
+    return `₹${parseFloat(price)}`;
   }
 
   return null;
@@ -32,7 +33,7 @@ export default function ShowcaseMenu({
             key={category.id}
             id={`category-${category.id}`}
             className="scroll-mt-20"
-            >
+          >
             {/* Category heading */}
             <div className="mb-8 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -56,6 +57,8 @@ export default function ShowcaseMenu({
                   item.price_max
                 );
 
+                const imageUrl = getMediaUrl(item.image);
+
                 return (
                   <article
                     key={item.id}
@@ -64,10 +67,11 @@ export default function ShowcaseMenu({
                     <div className="grid md:grid-cols-2">
                       {/* Image */}
                       <div className="aspect-[4/3] overflow-hidden md:aspect-auto md:min-h-[360px]">
-                        {item.image ? (
+                        {imageUrl ? (
                           <img
-                            src={item.image}
+                            src={imageUrl}
                             alt={item.name}
+                            draggable={false}
                             className="h-full w-full object-cover transition duration-500 hover:scale-105"
                           />
                         ) : (

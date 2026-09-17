@@ -26,7 +26,8 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "192.168.1.37",
+    "192.168.1.35",
+    "tapformenu.in,www.tapformenu.in"
 ]
 
 if os.environ.get("ALLOWED_HOSTS"):
@@ -48,6 +49,11 @@ CSRF_TRUSTED_ORIGINS = [
         "",
     ).split(",")
     if origin.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://tapformenu.in",
+    "https://www.tapformenu.in",
 ]
 
 

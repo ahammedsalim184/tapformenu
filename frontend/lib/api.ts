@@ -1,4 +1,3 @@
-
 import type { PublicMenuResponse } from "@/types/menu";
 
 const PUBLIC_API_BASE_URL =
@@ -22,14 +21,11 @@ export function getMediaUrl(
     return null;
   }
 
-  if (image.startsWith("/media/")) {
-    return image;
-  }
-
-  if (image.startsWith("/")) {
-    return image;
-  }
-
+  /*
+   * If the API already returned a complete URL,
+   * preserve the media path but use the public API host
+   * when running locally.
+   */
   if (
     image.startsWith("http://") ||
     image.startsWith("https://")
@@ -38,6 +34,22 @@ export function getMediaUrl(
       const url = new URL(image);
 
       if (url.pathname.startsWith("/media/")) {
+        const publicBase = PUBLIC_API_BASE_URL;
+
+        /*
+         * Local development:
+         * NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+         *
+         * Production:
+         * NEXT_PUBLIC_API_URL=/api
+         */
+        if (
+          publicBase.startsWith("http://") ||
+          publicBase.startsWith("https://")
+        ) {
+          return `${publicBase}${url.pathname}${url.search}`;
+        }
+
         return `${url.pathname}${url.search}`;
       }
 
@@ -45,6 +57,42 @@ export function getMediaUrl(
     } catch {
       return image;
     }
+  }
+
+  /*
+   * Relative media path such as:
+   * /media/menus/...
+   */
+  if (image.startsWith("/media/")) {
+    const publicBase = PUBLIC_API_BASE_URL;
+
+    if (
+      publicBase.startsWith("http://") ||
+      publicBase.startsWith("https://")
+    ) {
+      return `${publicBase}${image}`;
+    }
+
+    return image;
+  }
+
+  /*
+   * Other absolute paths.
+   */
+  if (image.startsWith("/")) {
+    return image;
+  }
+
+  /*
+   * Filename/path without /media/.
+   */
+  const publicBase = PUBLIC_API_BASE_URL;
+
+  if (
+    publicBase.startsWith("http://") ||
+    publicBase.startsWith("https://")
+  ) {
+    return `${publicBase}/media/${image}`;
   }
 
   return `/media/${image}`;
@@ -60,12 +108,9 @@ export async function getRestaurantMenu(
       ? `${API_BASE_URL}/api/menus/public/${restaurantSlug}/`
       : `${API_BASE_URL}/menus/public/${restaurantSlug}/`;
 
-  const response = await fetch(
-    endpoint,
-    {
-      cache: "no-store",
-    }
-  );
+  const response = await fetch(endpoint, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     if (response.status === 404) {

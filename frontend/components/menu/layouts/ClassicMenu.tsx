@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -8,6 +7,7 @@ import {
 } from "react";
 
 import type { MenuCategory } from "@/types/menu";
+import { getMediaUrl } from "@/lib/api";
 
 interface ClassicMenuProps {
   categories: MenuCategory[];
@@ -22,11 +22,11 @@ function formatPrice(
   priceMax: string | null
 ) {
   if (priceRange && priceMin && priceMax) {
-    return `₹${priceMin} - ₹${priceMax}`;
+    return `₹${parseFloat(priceMin)} - ₹${parseFloat(priceMax)}`;
   }
 
   if (price) {
-    return `₹${price}`;
+    return `₹${parseFloat(price)}`;
   }
 
   return null;
@@ -54,10 +54,6 @@ export default function ClassicMenu({
 
   /*
    * Measure the currently active category.
-   *
-   * This makes the vertical page height follow the
-   * selected category instead of using the height of
-   * the tallest category.
    */
   useEffect(() => {
     const activeElement =
@@ -83,9 +79,7 @@ export default function ClassicMenu({
   }, [activeCategory, categories]);
 
   /*
-   * Also recalculate when the browser width changes,
-   * because text wrapping and images can change the
-   * category height.
+   * Recalculate when browser width changes.
    */
   useEffect(() => {
     const handleResize = () => {
@@ -137,7 +131,7 @@ export default function ClassicMenu({
     let offset = delta;
 
     /*
-     * Resistance at the first and last category.
+     * Resistance at first and last category.
      */
     if (
       (activeCategory === 0 && delta > 0) ||
@@ -197,8 +191,7 @@ export default function ClassicMenu({
   };
 
   /*
-   * We use the actual container width for calculating
-   * the finger-following horizontal movement.
+   * Container width for finger-following movement.
    */
   const containerWidth =
     containerRef.current?.clientWidth || 1;
@@ -209,10 +202,6 @@ export default function ClassicMenu({
 
   return (
     <section className="w-full overflow-hidden">
-      {/*
-       * This wrapper dynamically changes height based
-       * on the currently selected category.
-       */}
       <div
         ref={containerRef}
         className="w-full overflow-hidden"
@@ -277,16 +266,19 @@ export default function ClassicMenu({
                             item.price_max
                           );
 
+                        const imageUrl =
+                          getMediaUrl(item.image);
+
                         return (
                           <article
                             key={item.id}
                             className="flex gap-4 py-5"
                           >
                             {/* Image */}
-                            {item.image && (
+                            {imageUrl && (
                               <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl sm:h-28 sm:w-28">
                                 <img
-                                  src={item.image}
+                                  src={imageUrl}
                                   alt={item.name}
                                   draggable={false}
                                   className="h-full w-full select-none object-cover"
@@ -382,4 +374,3 @@ export default function ClassicMenu({
     </section>
   );
 }
-
