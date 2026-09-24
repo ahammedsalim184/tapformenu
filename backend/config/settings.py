@@ -1,10 +1,16 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+PROJECT_ROOT = BASE_DIR.parent
+
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 # ============================================================
@@ -192,7 +198,7 @@ TEMPLATES = [
 # DATABASE
 # ============================================================
 
-if os.environ.get("DATABASE_URL"):
+if os.environ.get("DATABASE_URL") and not DEBUG:
     DATABASES = {
         "default": dj_database_url.config(
             conn_max_age=600,
@@ -203,26 +209,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get(
-                "POSTGRES_DB",
-                "tapformenu",
-            ),
-            "USER": os.environ.get(
-                "POSTGRES_USER",
-                "ahammedsalim",
-            ),
-            "PASSWORD": os.environ.get(
-                "POSTGRES_PASSWORD",
-                "",
-            ),
-            "HOST": os.environ.get(
-                "POSTGRES_HOST",
-                "localhost",
-            ),
-            "PORT": os.environ.get(
-                "POSTGRES_PORT",
-                "5432",
-            ),
+            "NAME": os.environ.get("POSTGRES_DB", "tapformenu"),
+            "USER": "ahammedsalim",
+            "PASSWORD": "",
+            "HOST": "localhost",
+            "PORT": "5432",
         }
     }
 
@@ -297,3 +288,39 @@ STORAGES = {
 # ============================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+
+# ============================================================
+# EMAIL / PASSWORD RESET
+# ============================================================
+
+DEFAULT_FROM_EMAIL = "TapForMenu <no-reply@tapformenu.in>"
+
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+
+FRONTEND_URL = os.environ.get(
+    "FRONTEND_URL",
+    "http://localhost:3000",
+).rstrip("/")
+
+
+
+# ============================================================
+# JWT AUTHENTICATION
+# ============================================================
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+
+    "UPDATE_LAST_LOGIN": False,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}

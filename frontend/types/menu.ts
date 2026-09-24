@@ -1,3 +1,7 @@
+export type MenuTheme =
+  | "classic"
+  | "dark";
+
 export interface MenuItemVariant {
   id: number;
   name: string;
@@ -48,6 +52,7 @@ export interface Restaurant {
   speciality_title: string;
   speciality_description: string;
   menu_layout: "classic" | "cards" | "showcase";
+  menu_theme: MenuTheme;
 }
 
 export interface SignatureDish {

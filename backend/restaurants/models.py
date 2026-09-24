@@ -55,6 +55,14 @@ class Restaurant(models.Model):
         CARDS = "cards", "Cards"
         SHOWCASE = "showcase", "Showcase"
 
+    class MenuTheme(models.TextChoices):
+        CLASSIC = "classic", "Classic"
+        DARK = "dark", "Dark"
+        ELEGANT = "elegant", "Elegant"
+        FRESH = "fresh", "Fresh"
+        OCEAN = "ocean", "Ocean"
+        MINIMAL = "minimal", "Minimal"
+
     name = models.CharField(
         max_length=200,
     )
@@ -130,6 +138,12 @@ class Restaurant(models.Model):
         max_length=20,
         choices=MenuLayout.choices,
         default=MenuLayout.CARDS,
+    )
+
+    menu_theme = models.CharField(
+        max_length=20,
+        choices=MenuTheme.choices,
+        default=MenuTheme.CLASSIC,
     )
 
     active = models.BooleanField(

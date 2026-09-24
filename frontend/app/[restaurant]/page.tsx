@@ -1,4 +1,5 @@
-
+import RestaurantHeader from "@/components/restaurant/RestaurantHeader";
+import RestaurantNav from "@/components/restaurant/RestaurantNav";
 import RestaurantHero from "@/components/restaurant/RestaurantHero";
 import SignatureDishes from "@/components/restaurant/SignatureDishes";
 import RestaurantSpeciality from "@/components/restaurant/RestaurantSpeciality";
@@ -22,30 +23,26 @@ export default async function RestaurantPage({
   const data = await getRestaurantMenu(restaurant);
 
   return (
-    <main className="min-h-screen bg-white">
+    <>
+      <RestaurantHeader restaurant={data.restaurant} />
 
-      {/* Restaurant Hero */}
-      <RestaurantHero restaurant={data.restaurant} />
+      <RestaurantNav restaurantSlug={restaurant} />
 
-      {/* What makes the restaurant special */}
-      <RestaurantSpeciality restaurant={data.restaurant} />
+      <main className="min-h-screen bg-white">
+        <RestaurantHero restaurant={data.restaurant} />
 
-      {/* Signature Dishes */}
-      <SignatureDishes dishes={data.signature_dishes} />
-      
+        <RestaurantSpeciality restaurant={data.restaurant} />
 
-      {/* Guest Reviews */}
-      <RestaurantReviews
-        review={data.review_section}
-      />
+        <SignatureDishes dishes={data.signature_dishes} />
 
-      <SocialMedia restaurant={data.restaurant} />
+        <RestaurantReviews
+          review={data.review_section}
+        />
 
-      {/* Location / Hours / Phone */}
-      <RestaurantInfo restaurant={data.restaurant} />
+        <SocialMedia restaurant={data.restaurant} />
 
-      
-    </main>
+        <RestaurantInfo restaurant={data.restaurant} />
+      </main>
+    </>
   );
 }
-

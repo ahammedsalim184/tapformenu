@@ -7,6 +7,19 @@ const nextConfig: NextConfig = {
     "192.168.1.35",
   ],
 
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*/",
+        destination: "http://127.0.0.1:8000/api/:path*/",
+      },
+      {
+        source: "/api/:path*",
+        destination: "http://127.0.0.1:8000/api/:path*",
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {

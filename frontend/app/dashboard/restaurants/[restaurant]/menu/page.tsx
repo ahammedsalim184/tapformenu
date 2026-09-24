@@ -1,7 +1,12 @@
-
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  TouchEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import MenuCategoryModal from "@/components/dashboard/menu/MenuCategoryModal";
@@ -17,6 +22,8 @@ import {
   MenuVariant,
 } from "@/components/dashboard/menu/MenuTypes";
 
+import { apiFetch } from "@/lib/auth";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -26,13 +33,24 @@ export default function RestaurantMenuPage() {
 
   const restaurantSlug = params.restaurant as string;
 
-  const [menu, setMenu] = useState<MenuResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [menu, setMenu] =
+    useState<MenuResponse | null>(null);
 
-  // ==================================================
-  // CATEGORY STATE
-  // ==================================================
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [activeCategoryId, setActiveCategoryId] =
+    useState<number | null>(null);
+
+  const [slideDirection, setSlideDirection] =
+    useState<"left" | "right">("left");
+
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isSwiping = useRef(false);
 
   const [showCategoryModal, setShowCategoryModal] =
     useState(false);
@@ -43,20 +61,20 @@ export default function RestaurantMenuPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<MenuCategory | null>(null);
 
-  const [categoryName, setCategoryName] = useState("");
+  const [categoryName, setCategoryName] =
+    useState("");
+
   const [categoryDescription, setCategoryDescription] =
     useState("");
+
   const [categoryDisplayOrder, setCategoryDisplayOrder] =
     useState("0");
 
   const [savingCategory, setSavingCategory] =
     useState(false);
 
-  const [categoryError, setCategoryError] = useState("");
-
-  // ==================================================
-  // DELETE CATEGORY STATE
-  // ==================================================
+  const [categoryError, setCategoryError] =
+    useState("");
 
   const [
     showDeleteCategoryModal,
@@ -69,10 +87,6 @@ export default function RestaurantMenuPage() {
   const [deletingCategory, setDeletingCategory] =
     useState(false);
 
-  // ==================================================
-  // MENU ITEM STATE
-  // ==================================================
-
   const [showItemModal, setShowItemModal] =
     useState(false);
 
@@ -82,26 +96,29 @@ export default function RestaurantMenuPage() {
   const [selectedItem, setSelectedItem] =
     useState<MenuItem | null>(null);
 
-  const [itemName, setItemName] = useState("");
+  const [itemName, setItemName] =
+    useState("");
+
   const [itemDescription, setItemDescription] =
     useState("");
+
   const [itemCategory, setItemCategory] =
     useState("");
 
   const [itemPriceRange, setItemPriceRange] =
     useState(false);
 
-  const [itemPrice, setItemPrice] = useState("");
+  const [itemPrice, setItemPrice] =
+    useState("");
+
   const [itemPriceMin, setItemPriceMin] =
     useState("");
+
   const [itemPriceMax, setItemPriceMax] =
     useState("");
 
   const [itemVegetarian, setItemVegetarian] =
     useState(false);
-
-  const [itemAvailable, setItemAvailable] =
-    useState(true);
 
   const [itemDisplayOrder, setItemDisplayOrder] =
     useState("0");
@@ -114,10 +131,6 @@ export default function RestaurantMenuPage() {
 
   const [itemError, setItemError] =
     useState("");
-
-  // ==================================================
-  // VARIANT STATE
-  // ==================================================
 
   const [showVariantModal, setShowVariantModal] =
     useState(false);
@@ -148,9 +161,6 @@ export default function RestaurantMenuPage() {
   const [variantPriceMax, setVariantPriceMax] =
     useState("");
 
-  const [variantAvailable, setVariantAvailable] =
-    useState(true);
-
   const [variantDisplayOrder, setVariantDisplayOrder] =
     useState("0");
 
@@ -163,33 +173,6 @@ export default function RestaurantMenuPage() {
   const [variantError, setVariantError] =
     useState("");
 
-  // ==================================================
-  // AUTH HELPERS
-  // ==================================================
-
-  function handleUnauthorized() {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-
-    router.push("/login");
-  }
-
-  function getToken() {
-    const token =
-      localStorage.getItem("access_token");
-
-    if (!token) {
-      router.push("/login");
-      return null;
-    }
-
-    return token;
-  }
-
-  // ==================================================
-  // SAFE JSON RESPONSE
-  // ==================================================
-
   async function getResponseData(
     response: Response
   ) {
@@ -199,7 +182,7 @@ export default function RestaurantMenuPage() {
     if (
       !contentType.includes("application/json")
     ) {
-      const text = await response.text();
+      await response.text();
 
       throw new Error(
         `Server returned an unexpected response (${response.status}).`
@@ -209,36 +192,17 @@ export default function RestaurantMenuPage() {
     return response.json();
   }
 
-  // ==================================================
-  // LOAD MENU
-  // ==================================================
-
   async function loadMenu() {
     try {
       setLoading(true);
       setError("");
 
-      const token = getToken();
-
-      if (!token) {
-        return;
-      }
-
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/manage/${restaurantSlug}/`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       if (response.status === 403) {
         setError(
@@ -259,7 +223,6 @@ export default function RestaurantMenuPage() {
             message = data.detail;
           }
         } catch {
-          // Keep default error message.
         }
 
         throw new Error(message);
@@ -271,6 +234,19 @@ export default function RestaurantMenuPage() {
       setMenu(data);
     } catch (err) {
       console.error(err);
+
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
 
       setError(
         err instanceof Error
@@ -288,9 +264,190 @@ export default function RestaurantMenuPage() {
     }
   }, [restaurantSlug]);
 
-  // ==================================================
-  // CATEGORY
-  // ==================================================
+  useEffect(() => {
+    if (
+      menu?.categories.length &&
+      activeCategoryId === null
+    ) {
+      setActiveCategoryId(
+        menu.categories[0].id
+      );
+    }
+  }, [menu, activeCategoryId]);
+
+  function changeCategory(
+    categoryId: number,
+    direction: "left" | "right"
+  ) {
+    if (
+      activeCategoryId === categoryId
+    ) {
+      return;
+    }
+
+    setSlideDirection(direction);
+    setActiveCategoryId(categoryId);
+  }
+
+  function goToNextCategory() {
+    if (!menu || !menu.categories.length) {
+      return;
+    }
+
+    const currentIndex =
+      menu.categories.findIndex(
+        (category) =>
+          category.id === activeCategoryId
+      );
+
+    if (currentIndex === -1) {
+      setActiveCategoryId(
+        menu.categories[0].id
+      );
+      return;
+    }
+
+    if (
+      currentIndex <
+      menu.categories.length - 1
+    ) {
+      changeCategory(
+        menu.categories[currentIndex + 1].id,
+        "left"
+      );
+    }
+  }
+
+  function goToPreviousCategory() {
+    if (!menu || !menu.categories.length) {
+      return;
+    }
+
+    const currentIndex =
+      menu.categories.findIndex(
+        (category) =>
+          category.id === activeCategoryId
+      );
+
+    if (currentIndex === -1) {
+      setActiveCategoryId(
+        menu.categories[0].id
+      );
+      return;
+    }
+
+    if (currentIndex > 0) {
+      changeCategory(
+        menu.categories[currentIndex - 1].id,
+        "right"
+      );
+    }
+  }
+
+  function handleCategoryTouchStart(
+    event: TouchEvent<HTMLDivElement>
+  ) {
+    if (event.touches.length !== 1) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      isSwiping.current = false;
+      return;
+    }
+
+    touchStartX.current =
+      event.touches[0].clientX;
+
+    touchStartY.current =
+      event.touches[0].clientY;
+
+    isSwiping.current = false;
+  }
+
+  function handleCategoryTouchMove(
+    event: TouchEvent<HTMLDivElement>
+  ) {
+    if (
+      touchStartX.current === null ||
+      touchStartY.current === null ||
+      event.touches.length !== 1
+    ) {
+      return;
+    }
+
+    const currentX =
+      event.touches[0].clientX;
+
+    const currentY =
+      event.touches[0].clientY;
+
+    const deltaX =
+      currentX - touchStartX.current;
+
+    const deltaY =
+      currentY - touchStartY.current;
+
+    if (
+      Math.abs(deltaX) > 12 &&
+      Math.abs(deltaX) > Math.abs(deltaY)
+    ) {
+      isSwiping.current = true;
+    }
+  }
+
+  function handleCategoryTouchEnd(
+    event: TouchEvent<HTMLDivElement>
+  ) {
+    if (
+      touchStartX.current === null ||
+      touchStartY.current === null
+    ) {
+      return;
+    }
+
+    const endX =
+      event.changedTouches[0]?.clientX;
+
+    const endY =
+      event.changedTouches[0]?.clientY;
+
+    if (
+      endX === undefined ||
+      endY === undefined
+    ) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      isSwiping.current = false;
+      return;
+    }
+
+    const deltaX =
+      endX - touchStartX.current;
+
+    const deltaY =
+      endY - touchStartY.current;
+
+    const minimumSwipeDistance = 55;
+
+    const isHorizontalSwipe =
+      Math.abs(deltaX) >=
+        minimumSwipeDistance &&
+      Math.abs(deltaX) > Math.abs(deltaY);
+
+    if (
+      isHorizontalSwipe &&
+      isSwiping.current
+    ) {
+      if (deltaX < 0) {
+        goToNextCategory();
+      } else {
+        goToPreviousCategory();
+      }
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+    isSwiping.current = false;
+  }
 
   function openAddCategory() {
     setCategoryModalMode("add");
@@ -346,12 +503,6 @@ export default function RestaurantMenuPage() {
       return;
     }
 
-    const token = getToken();
-
-    if (!token) {
-      return;
-    }
-
     try {
       setSavingCategory(true);
       setCategoryError("");
@@ -370,12 +521,11 @@ export default function RestaurantMenuPage() {
         categoryModalMode === "edit" &&
         selectedCategory
       ) {
-        response = await fetch(
+        response = await apiFetch(
           `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/${selectedCategory.id}/`,
           {
             method: "PATCH",
             headers: {
-              Authorization: `Bearer ${token}`,
               "Content-Type":
                 "application/json",
             },
@@ -383,23 +533,17 @@ export default function RestaurantMenuPage() {
           }
         );
       } else {
-        response = await fetch(
+        response = await apiFetch(
           `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/`,
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${token}`,
               "Content-Type":
                 "application/json",
             },
             body: JSON.stringify(payload),
           }
         );
-      }
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
       }
 
       const data =
@@ -443,6 +587,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setCategoryError(
         err instanceof Error
           ? err.message
@@ -474,29 +631,15 @@ export default function RestaurantMenuPage() {
       return;
     }
 
-    const token = getToken();
-
-    if (!token) {
-      return;
-    }
-
     try {
       setDeletingCategory(true);
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/manage/${restaurantSlug}/categories/${categoryToDelete.id}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       if (!response.ok) {
         let message =
@@ -510,18 +653,38 @@ export default function RestaurantMenuPage() {
             message = data.detail;
           }
         } catch {
-          // Ignore response parsing errors.
         }
 
         throw new Error(message);
       }
 
       setShowDeleteCategoryModal(false);
+
+      if (
+        activeCategoryId ===
+        categoryToDelete.id
+      ) {
+        setActiveCategoryId(null);
+      }
+
       setCategoryToDelete(null);
 
       await loadMenu();
     } catch (err) {
       console.error(err);
+
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
 
       alert(
         err instanceof Error
@@ -532,10 +695,6 @@ export default function RestaurantMenuPage() {
       setDeletingCategory(false);
     }
   }
-
-  // ==================================================
-  // ITEM FORM RESET
-  // ==================================================
 
   function resetItemForm(
     categoryId?: number
@@ -561,16 +720,11 @@ export default function RestaurantMenuPage() {
     setItemPriceMax("");
 
     setItemVegetarian(false);
-    setItemAvailable(true);
     setItemDisplayOrder("0");
 
     setItemImage(null);
     setItemError("");
   }
-
-  // ==================================================
-  // ADD ITEM
-  // ==================================================
 
   function openAddItem(
     categoryId?: number
@@ -582,10 +736,6 @@ export default function RestaurantMenuPage() {
 
     setShowItemModal(true);
   }
-
-  // ==================================================
-  // EDIT ITEM
-  // ==================================================
 
   function openEditItem(
     item: MenuItem
@@ -623,10 +773,6 @@ export default function RestaurantMenuPage() {
       item.vegetarian
     );
 
-    setItemAvailable(
-      item.available
-    );
-
     setItemDisplayOrder(
       String(item.display_order)
     );
@@ -647,15 +793,12 @@ export default function RestaurantMenuPage() {
     setItemError("");
   }
 
-  // ==================================================
-  // ITEM VALIDATION
-  // ==================================================
-
   function validateItemForm() {
     if (!itemName.trim()) {
       setItemError(
         "Item name is required."
       );
+
       return false;
     }
 
@@ -663,6 +806,7 @@ export default function RestaurantMenuPage() {
       setItemError(
         "Please select a category."
       );
+
       return false;
     }
 
@@ -671,6 +815,7 @@ export default function RestaurantMenuPage() {
         setItemError(
           "Minimum price is required."
         );
+
         return false;
       }
 
@@ -678,6 +823,7 @@ export default function RestaurantMenuPage() {
         setItemError(
           "Maximum price is required."
         );
+
         return false;
       }
 
@@ -696,6 +842,7 @@ export default function RestaurantMenuPage() {
         setItemError(
           "Please enter valid prices."
         );
+
         return false;
       }
 
@@ -703,6 +850,7 @@ export default function RestaurantMenuPage() {
         setItemError(
           "Price cannot be negative."
         );
+
         return false;
       }
 
@@ -710,6 +858,7 @@ export default function RestaurantMenuPage() {
         setItemError(
           "Maximum price must be greater than or equal to minimum price."
         );
+
         return false;
       }
     } else {
@@ -722,6 +871,7 @@ export default function RestaurantMenuPage() {
           setItemError(
             "Please enter a valid price."
           );
+
           return false;
         }
 
@@ -729,6 +879,7 @@ export default function RestaurantMenuPage() {
           setItemError(
             "Price cannot be negative."
           );
+
           return false;
         }
       }
@@ -736,10 +887,6 @@ export default function RestaurantMenuPage() {
 
     return true;
   }
-
-  // ==================================================
-  // ADD ITEM
-  // ==================================================
 
   async function handleAddItem(
     event: FormEvent<HTMLFormElement>
@@ -749,12 +896,6 @@ export default function RestaurantMenuPage() {
     setItemError("");
 
     if (!validateItemForm()) {
-      return;
-    }
-
-    const token = getToken();
-
-    if (!token) {
       return;
     }
 
@@ -806,11 +947,6 @@ export default function RestaurantMenuPage() {
       );
 
       formData.append(
-        "available",
-        String(itemAvailable)
-      );
-
-      formData.append(
         "display_order",
         String(
           Number(itemDisplayOrder) || 0
@@ -824,21 +960,13 @@ export default function RestaurantMenuPage() {
         );
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/items/`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           body: formData,
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       const data =
         await getResponseData(response);
@@ -893,6 +1021,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setItemError(
         err instanceof Error
           ? err.message
@@ -902,10 +1043,6 @@ export default function RestaurantMenuPage() {
       setSavingItem(false);
     }
   }
-
-  // ==================================================
-  // UPDATE ITEM
-  // ==================================================
 
   async function handleUpdateItem(
     event: FormEvent<HTMLFormElement>
@@ -918,16 +1055,11 @@ export default function RestaurantMenuPage() {
       setItemError(
         "No menu item selected."
       );
+
       return;
     }
 
     if (!validateItemForm()) {
-      return;
-    }
-
-    const token = getToken();
-
-    if (!token) {
       return;
     }
 
@@ -994,11 +1126,6 @@ export default function RestaurantMenuPage() {
       );
 
       formData.append(
-        "available",
-        String(itemAvailable)
-      );
-
-      formData.append(
         "display_order",
         String(
           Number(itemDisplayOrder) || 0
@@ -1012,21 +1139,13 @@ export default function RestaurantMenuPage() {
         );
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/items/${selectedItem.id}/`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           body: formData,
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       const data =
         await getResponseData(response);
@@ -1081,6 +1200,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setItemError(
         err instanceof Error
           ? err.message
@@ -1090,10 +1222,6 @@ export default function RestaurantMenuPage() {
       setSavingItem(false);
     }
   }
-
-  // ==================================================
-  // DELETE ITEM
-  // ==================================================
 
   async function handleDeleteItem(
     item: MenuItem
@@ -1106,29 +1234,15 @@ export default function RestaurantMenuPage() {
       return;
     }
 
-    const token = getToken();
-
-    if (!token) {
-      return;
-    }
-
     try {
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/items/${item.id}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       if (!response.ok) {
         const data =
@@ -1166,6 +1280,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setError(
         err instanceof Error
           ? err.message
@@ -1174,25 +1301,16 @@ export default function RestaurantMenuPage() {
     }
   }
 
-  // ==================================================
-  // VARIANT FORM RESET
-  // ==================================================
-
   function resetVariantForm() {
     setVariantName("");
     setVariantPriceRange(false);
     setVariantPrice("");
     setVariantPriceMin("");
     setVariantPriceMax("");
-    setVariantAvailable(true);
     setVariantDisplayOrder("0");
     setVariantImage(null);
     setVariantError("");
   }
-
-  // ==================================================
-  // ADD VARIANT
-  // ==================================================
 
   function openAddVariant(
     item: MenuItem
@@ -1205,10 +1323,6 @@ export default function RestaurantMenuPage() {
     setSelectedItemForVariant(item);
     setShowVariantModal(true);
   }
-
-  // ==================================================
-  // EDIT VARIANT
-  // ==================================================
 
   function openEditVariant(
     item: MenuItem,
@@ -1239,10 +1353,6 @@ export default function RestaurantMenuPage() {
       variant.price_max || ""
     );
 
-    setVariantAvailable(
-      variant.available
-    );
-
     setVariantDisplayOrder(
       String(variant.display_order)
     );
@@ -1264,15 +1374,12 @@ export default function RestaurantMenuPage() {
     setVariantError("");
   }
 
-  // ==================================================
-  // VARIANT VALIDATION
-  // ==================================================
-
   function validateVariantForm() {
     if (!selectedItemForVariant) {
       setVariantError(
         "No menu item selected."
       );
+
       return false;
     }
 
@@ -1280,6 +1387,7 @@ export default function RestaurantMenuPage() {
       setVariantError(
         "Variant name is required."
       );
+
       return false;
     }
 
@@ -1288,6 +1396,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Minimum price is required."
         );
+
         return false;
       }
 
@@ -1295,6 +1404,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Maximum price is required."
         );
+
         return false;
       }
 
@@ -1313,6 +1423,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Please enter valid prices."
         );
+
         return false;
       }
 
@@ -1320,6 +1431,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Price cannot be negative."
         );
+
         return false;
       }
 
@@ -1327,6 +1439,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Maximum price must be greater than or equal to minimum price."
         );
+
         return false;
       }
     } else {
@@ -1334,6 +1447,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Price is required."
         );
+
         return false;
       }
 
@@ -1345,6 +1459,7 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Please enter a valid price."
         );
+
         return false;
       }
 
@@ -1352,16 +1467,13 @@ export default function RestaurantMenuPage() {
         setVariantError(
           "Price cannot be negative."
         );
+
         return false;
       }
     }
 
     return true;
   }
-
-  // ==================================================
-  // ADD VARIANT
-  // ==================================================
 
   async function handleAddVariant(
     event: FormEvent<HTMLFormElement>
@@ -1375,12 +1487,6 @@ export default function RestaurantMenuPage() {
     }
 
     if (!selectedItemForVariant) {
-      return;
-    }
-
-    const token = getToken();
-
-    if (!token) {
       return;
     }
 
@@ -1417,11 +1523,6 @@ export default function RestaurantMenuPage() {
       }
 
       formData.append(
-        "available",
-        String(variantAvailable)
-      );
-
-      formData.append(
         "display_order",
         String(
           Number(variantDisplayOrder) || 0
@@ -1435,21 +1536,13 @@ export default function RestaurantMenuPage() {
         );
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           body: formData,
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       const data =
         await getResponseData(response);
@@ -1505,6 +1598,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setVariantError(
         err instanceof Error
           ? err.message
@@ -1514,10 +1620,6 @@ export default function RestaurantMenuPage() {
       setSavingVariant(false);
     }
   }
-
-  // ==================================================
-  // UPDATE VARIANT
-  // ==================================================
 
   async function handleUpdateVariant(
     event: FormEvent<HTMLFormElement>
@@ -1533,16 +1635,11 @@ export default function RestaurantMenuPage() {
       setVariantError(
         "No variant selected."
       );
+
       return;
     }
 
     if (!validateVariantForm()) {
-      return;
-    }
-
-    const token = getToken();
-
-    if (!token) {
       return;
     }
 
@@ -1594,11 +1691,6 @@ export default function RestaurantMenuPage() {
       }
 
       formData.append(
-        "available",
-        String(variantAvailable)
-      );
-
-      formData.append(
         "display_order",
         String(
           Number(variantDisplayOrder) || 0
@@ -1612,21 +1704,13 @@ export default function RestaurantMenuPage() {
         );
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${selectedItemForVariant.id}/variants/${selectedVariant.id}/`,
         {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           body: formData,
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       const data =
         await getResponseData(response);
@@ -1682,6 +1766,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setVariantError(
         err instanceof Error
           ? err.message
@@ -1691,10 +1788,6 @@ export default function RestaurantMenuPage() {
       setSavingVariant(false);
     }
   }
-
-  // ==================================================
-  // DELETE VARIANT
-  // ==================================================
 
   async function handleDeleteVariant(
     item: MenuItem,
@@ -1708,29 +1801,15 @@ export default function RestaurantMenuPage() {
       return;
     }
 
-    const token = getToken();
-
-    if (!token) {
-      return;
-    }
-
     try {
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${item.id}/variants/${variant.id}/`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
 
       if (!response.ok) {
         const data =
@@ -1748,6 +1827,19 @@ export default function RestaurantMenuPage() {
     } catch (err) {
       console.error(err);
 
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
       setError(
         err instanceof Error
           ? err.message
@@ -1756,47 +1848,337 @@ export default function RestaurantMenuPage() {
     }
   }
 
-  // ==================================================
-  // LOADING
-  // ==================================================
+  async function handleToggleItem(
+    item: MenuItem
+  ) {
+    const newAvailable =
+      !item.available;
+
+    setMenu((currentMenu) => {
+      if (!currentMenu) {
+        return currentMenu;
+      }
+
+      return {
+        ...currentMenu,
+        categories:
+          currentMenu.categories.map(
+            (category) => ({
+              ...category,
+              items:
+                category.items.map(
+                  (existingItem) => {
+                    if (
+                      existingItem.id !==
+                      item.id
+                    ) {
+                      return existingItem;
+                    }
+
+                    return {
+                      ...existingItem,
+                      available:
+                        newAvailable,
+                    };
+                  }
+                ),
+            })
+          ),
+      };
+    });
+
+    try {
+      setError("");
+
+      const response = await apiFetch(
+        `${API_BASE_URL}/menus/items/${item.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            available:
+              newAvailable,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data =
+          await response
+            .json()
+            .catch(() => ({}));
+
+        throw new Error(
+          data.detail ||
+            "Failed to update item status."
+        );
+      }
+    } catch (err) {
+      console.error(err);
+
+      setMenu((currentMenu) => {
+        if (!currentMenu) {
+          return currentMenu;
+        }
+
+        return {
+          ...currentMenu,
+          categories:
+            currentMenu.categories.map(
+              (category) => ({
+                ...category,
+                items:
+                  category.items.map(
+                    (existingItem) => {
+                      if (
+                        existingItem.id !==
+                        item.id
+                      ) {
+                        return existingItem;
+                      }
+
+                      return {
+                        ...existingItem,
+                        available:
+                          item.available,
+                      };
+                    }
+                  ),
+              })
+            ),
+        };
+      });
+
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update item status."
+      );
+    }
+  }
+
+  async function handleToggleVariant(
+    item: MenuItem,
+    variant: MenuVariant
+  ) {
+    const newAvailable =
+      !variant.available;
+
+    setMenu((currentMenu) => {
+      if (!currentMenu) {
+        return currentMenu;
+      }
+
+      return {
+        ...currentMenu,
+        categories:
+          currentMenu.categories.map(
+            (category) => ({
+              ...category,
+              items:
+                category.items.map(
+                  (existingItem) => {
+                    if (
+                      existingItem.id !==
+                      item.id
+                    ) {
+                      return existingItem;
+                    }
+
+                    return {
+                      ...existingItem,
+                      variants:
+                        existingItem.variants.map(
+                          (
+                            existingVariant
+                          ) => {
+                            if (
+                              existingVariant.id !==
+                              variant.id
+                            ) {
+                              return existingVariant;
+                            }
+
+                            return {
+                              ...existingVariant,
+                              available:
+                                newAvailable,
+                            };
+                          }
+                        ),
+                    };
+                  }
+                ),
+            })
+          ),
+      };
+    });
+
+    try {
+      setError("");
+
+      const response = await apiFetch(
+        `${API_BASE_URL}/menus/manage/${restaurantSlug}/items/${item.id}/variants/${variant.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            available:
+              newAvailable,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data =
+          await response
+            .json()
+            .catch(() => ({}));
+
+        throw new Error(
+          data.detail ||
+            "Failed to update variant status."
+        );
+      }
+    } catch (err) {
+      console.error(err);
+
+      setMenu((currentMenu) => {
+        if (!currentMenu) {
+          return currentMenu;
+        }
+
+        return {
+          ...currentMenu,
+          categories:
+            currentMenu.categories.map(
+              (category) => ({
+                ...category,
+                items:
+                  category.items.map(
+                    (existingItem) => {
+                      if (
+                        existingItem.id !==
+                        item.id
+                      ) {
+                        return existingItem;
+                      }
+
+                      return {
+                        ...existingItem,
+                        variants:
+                          existingItem.variants.map(
+                            (
+                              existingVariant
+                            ) => {
+                              if (
+                                existingVariant.id !==
+                                variant.id
+                              ) {
+                                return existingVariant;
+                              }
+
+                              return {
+                                ...existingVariant,
+                                available:
+                                  variant.available,
+                              };
+                            }
+                          ),
+                      };
+                    }
+                  ),
+              })
+            ),
+        };
+      });
+
+      if (
+        err instanceof Error &&
+        (
+          err.message ===
+            "Not authenticated." ||
+          err.message ===
+            "Authentication failed."
+        )
+      ) {
+        router.replace("/login");
+        return;
+      }
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update variant status."
+      );
+    }
+  }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="rounded-xl border border-gray-200 bg-white p-8">
-            <p className="text-sm text-gray-500">
-              Loading menu...
-            </p>
+      <main className="min-h-screen bg-[#f7f7f5]">
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+          <div className="animate-pulse">
+            <div className="h-4 w-28 rounded bg-gray-200" />
+
+            <div className="mt-5 h-9 w-44 rounded-lg bg-gray-200" />
+
+            <div className="mt-3 h-4 w-64 rounded bg-gray-200" />
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="h-28 rounded-2xl bg-white" />
+              <div className="h-28 rounded-2xl bg-white" />
+            </div>
+
+            <div className="mt-8 h-64 rounded-2xl bg-white" />
           </div>
         </div>
       </main>
     );
   }
 
-  // ==================================================
-  // ERROR
-  // ==================================================
-
   if (error) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-            <h1 className="text-lg font-semibold text-red-800">
-              Unable to load menu
+      <main className="min-h-screen bg-[#f7f7f5]">
+        <div className="mx-auto flex min-h-screen max-w-lg items-center px-5">
+          <div className="w-full rounded-3xl border border-red-100 bg-white p-7 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-xl">
+              !
+            </div>
+
+            <h1 className="mt-5 text-xl font-semibold tracking-tight text-gray-950">
+              Something went wrong
             </h1>
 
-            <p className="mt-2 whitespace-pre-line text-sm text-red-700">
+            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-gray-500">
               {error}
             </p>
 
             <button
               type="button"
-              onClick={() => loadMenu()}
-              className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+              onClick={loadMenu}
+              className="mt-6 w-full rounded-2xl bg-gray-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-800 active:scale-[0.98]"
             >
-              Try Again
+              Try again
             </button>
           </div>
         </div>
@@ -1808,127 +2190,325 @@ export default function RestaurantMenuPage() {
     return null;
   }
 
-  // ==================================================
-  // MAIN PAGE
-  // ==================================================
+  const totalItems =
+    menu.categories.reduce(
+      (total, category) =>
+        total + category.items.length,
+      0
+    );
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-6 py-8">
+    <main className="min-h-screen bg-[#f7f7f5] pb-28 sm:pb-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <header className="flex items-center py-5 sm:py-7">
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/dashboard/restaurants/${restaurantSlug}`
+              )
+            }
+            className="
+              inline-flex
+              items-center
+              gap-2
+              rounded-xl
+              px-2
+              py-2
+              text-sm
+              font-medium
+              text-gray-500
+              transition
+              hover:bg-white
+              hover:text-gray-950
+            "
+          >
+            <span className="text-lg leading-none">
+              ←
+            </span>
 
-        {/* HEADER */}
+            <span className="hidden sm:inline">
+              Restaurant
+            </span>
+          </button>
+        </header>
 
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/dashboard/restaurants/${restaurantSlug}`
-                )
-              }
-              className="mb-3 text-sm text-gray-500 hover:text-gray-900"
-            >
-              ← Back to Restaurant
-            </button>
+        <section className="mt-2 grid grid-cols-2 gap-3 sm:mt-4 sm:max-w-xl">
+          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] sm:p-5">
+            <p className="text-xs font-medium text-gray-400">
+              Categories
+            </p>
 
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Menu
-            </h1>
-
-            <p className="mt-1 text-sm text-gray-500">
-              {menu.restaurant.name}
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
+              {menu.categories.length}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={openAddCategory}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              + Add Category
-            </button>
+          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] sm:p-5">
+            <p className="text-xs font-medium text-gray-400">
+              Menu items
+            </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                openAddItem()
-              }
-              disabled={
-                menu.categories.length === 0
-              }
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              + Add Menu Item
-            </button>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
+              {totalItems}
+            </p>
           </div>
-        </div>
+        </section>
 
-        {/* NO CATEGORIES */}
+        <section className="mt-6 rounded-3xl border border-gray-200/80 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-950">
+                Manage your menu
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Add a category first, then add dishes to it.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <button
+                type="button"
+                onClick={openAddCategory}
+                className="
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  bg-gray-50
+                  px-4
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-gray-900
+                  transition
+                  hover:bg-gray-100
+                  active:scale-[0.98]
+                "
+              >
+                <span className="mr-1">
+                  +
+                </span>
+                Category
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  openAddItem()
+                }
+                disabled={
+                  menu.categories.length === 0
+                }
+                className="
+                  rounded-2xl
+                  bg-gray-950
+                  px-4
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition
+                  hover:bg-gray-800
+                  active:scale-[0.98]
+                  disabled:cursor-not-allowed
+                  disabled:bg-gray-200
+                  disabled:text-gray-400
+                "
+              >
+                <span className="mr-1">
+                  +
+                </span>
+                Menu item
+              </button>
+            </div>
+          </div>
+        </section>
 
         {menu.categories.length === 0 && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <h2 className="text-lg font-semibold text-gray-900">
-              No menu categories yet
-            </h2>
+          <section className="mt-5 overflow-hidden rounded-3xl border border-dashed border-gray-300 bg-white">
+            <div className="px-6 py-12 text-center sm:px-10 sm:py-16">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gray-950 text-2xl text-white shadow-lg">
+                +
+              </div>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Create your first category before
-              adding menu items.
-            </p>
+              <h2 className="mt-6 text-xl font-semibold tracking-tight text-gray-950">
+                Start your menu
+              </h2>
 
-            <button
-              type="button"
-              onClick={openAddCategory}
-              className="mt-5 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              + Add Category
-            </button>
-          </div>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">
+                Create your first category, such as
+                Starters, Main Course or Drinks.
+              </p>
+
+              <button
+                type="button"
+                onClick={openAddCategory}
+                className="
+                  mt-6
+                  rounded-2xl
+                  bg-gray-950
+                  px-6
+                  py-3.5
+                  text-sm
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition
+                  hover:bg-gray-800
+                  active:scale-[0.98]
+                "
+              >
+                Create first category
+              </button>
+            </div>
+          </section>
         )}
 
-        {/* CATEGORIES */}
+        {menu.categories.length > 0 && (
+          <section className="mt-6">
+            <div className="sticky top-0 z-30 -mx-4 border-y border-gray-200/70 bg-[#f7f7f5]/95 backdrop-blur-xl sm:static sm:mx-0 sm:border-y-0 sm:bg-transparent sm:backdrop-blur-none">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-7
+                  overflow-x-auto
+                  px-4
+                  py-3
+                  scrollbar-none
+                  sm:px-1
+                  sm:py-2
+                "
+              >
+                {menu.categories.map(
+                  (category) => {
+                    const isActive =
+                      activeCategoryId ===
+                      category.id;
 
-        <div className="space-y-6">
-          {menu.categories.map(
-            (category) => (
-              <MenuCategorySection
-                key={category.id}
-                category={category}
-                onEditCategory={
-                  openEditCategory
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() =>
+                          changeCategory(
+                            category.id,
+                            "left"
+                          )
+                        }
+                        className={`
+                          relative
+                          shrink-0
+                          pb-2
+                          text-sm
+                          font-medium
+                          transition-colors
+                          ${
+                            isActive
+                              ? "text-gray-950"
+                              : "text-gray-400 hover:text-gray-700"
+                          }
+                        `}
+                      >
+                        {category.name}
+
+                        {isActive && (
+                          <span
+                            className="
+                              absolute
+                              inset-x-0
+                              bottom-0
+                              h-0.5
+                              rounded-full
+                              bg-gray-950
+                            "
+                          />
+                        )}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+
+            <div
+              className="relative mt-5 overflow-hidden touch-pan-y"
+              onTouchStart={
+                handleCategoryTouchStart
+              }
+              onTouchMove={
+                handleCategoryTouchMove
+              }
+              onTouchEnd={
+                handleCategoryTouchEnd
+              }
+            >
+              <div
+                key={activeCategoryId}
+                className={
+                  slideDirection === "left"
+                    ? "animate-[categorySlideInLeft_280ms_ease-out]"
+                    : "animate-[categorySlideInRight_280ms_ease-out]"
                 }
-                onDeleteCategory={
-                  openDeleteCategory
-                }
-                onAddItem={
-                  openAddItem
-                }
-                onAddVariant={
-                  openAddVariant
-                }
-                onEditVariant={
-                  openEditVariant
-                }
-                onDeleteVariant={
-                  handleDeleteVariant
-                }
-                onEditItem={
-                  openEditItem
-                }
-                onDeleteItem={
-                  handleDeleteItem
-                }
-              />
-            )
-          )}
+              >
+                {menu.categories
+                  .filter(
+                    (category) =>
+                      activeCategoryId ===
+                      category.id
+                  )
+                  .map((category) => (
+                    <div
+                      key={category.id}
+                    >
+                      <MenuCategorySection
+                        category={category}
+                        onEditCategory={
+                          openEditCategory
+                        }
+                        onDeleteCategory={
+                          openDeleteCategory
+                        }
+                        onAddItem={
+                          openAddItem
+                        }
+                        onAddVariant={
+                          openAddVariant
+                        }
+                        onEditVariant={
+                          openEditVariant
+                        }
+                        onDeleteVariant={
+                          handleDeleteVariant
+                        }
+                        onToggleVariant={
+                          handleToggleVariant
+                        }
+                        onEditItem={
+                          openEditItem
+                        }
+                        onDeleteItem={
+                          handleDeleteItem
+                        }
+                        onToggleItem={
+                          handleToggleItem
+                        }
+                      />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="mt-8 hidden border-t border-gray-200 py-6 sm:block">
+          <p className="text-center text-xs text-gray-400">
+            Changes are saved directly to your restaurant menu.
+          </p>
         </div>
       </div>
-
-      {/* ================================================== */}
-      {/* CATEGORY MODAL */}
-      {/* ================================================== */}
 
       <MenuCategoryModal
         open={showCategoryModal}
@@ -1955,10 +2535,6 @@ export default function RestaurantMenuPage() {
         }
       />
 
-      {/* ================================================== */}
-      {/* DELETE CATEGORY */}
-      {/* ================================================== */}
-
       <DeleteCategoryModal
         open={
           showDeleteCategoryModal
@@ -1973,10 +2549,6 @@ export default function RestaurantMenuPage() {
         }
       />
 
-      {/* ================================================== */}
-      {/* MENU ITEM MODAL */}
-      {/* ================================================== */}
-
       <MenuItemForm
         open={showItemModal}
         categories={menu.categories}
@@ -1988,7 +2560,6 @@ export default function RestaurantMenuPage() {
         priceMin={itemPriceMin}
         priceMax={itemPriceMax}
         vegetarian={itemVegetarian}
-        available={itemAvailable}
         displayOrder={itemDisplayOrder}
         image={itemImage}
         error={itemError}
@@ -2028,9 +2599,6 @@ export default function RestaurantMenuPage() {
         onVegetarianChange={
           setItemVegetarian
         }
-        onAvailableChange={
-          setItemAvailable
-        }
         onDisplayOrderChange={
           setItemDisplayOrder
         }
@@ -2052,10 +2620,6 @@ export default function RestaurantMenuPage() {
         }
       />
 
-      {/* ================================================== */}
-      {/* VARIANT MODAL */}
-      {/* ================================================== */}
-
       <MenuVariantForm
         open={showVariantModal}
         itemName={
@@ -2069,9 +2633,6 @@ export default function RestaurantMenuPage() {
         price={variantPrice}
         priceMin={variantPriceMin}
         priceMax={variantPriceMax}
-        available={
-          variantAvailable
-        }
         displayOrder={
           variantDisplayOrder
         }
@@ -2103,9 +2664,6 @@ export default function RestaurantMenuPage() {
         }
         onPriceMaxChange={
           setVariantPriceMax
-        }
-        onAvailableChange={
-          setVariantAvailable
         }
         onDisplayOrderChange={
           setVariantDisplayOrder

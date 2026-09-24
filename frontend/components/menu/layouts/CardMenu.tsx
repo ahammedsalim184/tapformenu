@@ -6,13 +6,19 @@ import {
   useState,
 } from "react";
 
-import type { MenuCategory } from "@/types/menu";
+import type {
+  MenuCategory,
+  MenuTheme,
+} from "@/types/menu";
+
 import { getMediaUrl } from "@/lib/api";
+import { getMenuThemeStyles } from "@/components/menu/menuThemes";
 
 interface CardMenuProps {
   categories: MenuCategory[];
   activeCategory: number;
   onCategoryChange: (index: number) => void;
+  theme: MenuTheme;
 }
 
 function formatPrice(
@@ -46,8 +52,10 @@ export default function CardMenu({
   categories,
   activeCategory,
   onCategoryChange,
+  theme,
 }: CardMenuProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef =
+    useRef<HTMLDivElement>(null);
 
   const categoryRefs = useRef<
     Array<HTMLElement | null>
@@ -57,14 +65,15 @@ export default function CardMenu({
   const currentX = useRef(0);
   const isSwiping = useRef(false);
 
-  const [dragOffset, setDragOffset] = useState(0);
-  const [activeHeight, setActiveHeight] = useState<
-    number | null
-  >(null);
+  const [dragOffset, setDragOffset] =
+    useState(0);
 
-  /*
-   * Measure the currently active category.
-   */
+  const [activeHeight, setActiveHeight] =
+    useState<number | null>(null);
+
+  const styles =
+    getMenuThemeStyles(theme);
+
   useEffect(() => {
     const activeElement =
       categoryRefs.current[activeCategory];
@@ -72,14 +81,15 @@ export default function CardMenu({
     if (!activeElement) return;
 
     const updateHeight = () => {
-      setActiveHeight(activeElement.offsetHeight);
+      setActiveHeight(
+        activeElement.offsetHeight
+      );
     };
 
     updateHeight();
 
-    const resizeObserver = new ResizeObserver(
-      updateHeight
-    );
+    const resizeObserver =
+      new ResizeObserver(updateHeight);
 
     resizeObserver.observe(activeElement);
 
@@ -88,20 +98,22 @@ export default function CardMenu({
     };
   }, [activeCategory, categories]);
 
-  /*
-   * Recalculate category height when browser width changes.
-   */
   useEffect(() => {
     const handleResize = () => {
       const activeElement =
         categoryRefs.current[activeCategory];
 
       if (activeElement) {
-        setActiveHeight(activeElement.offsetHeight);
+        setActiveHeight(
+          activeElement.offsetHeight
+        );
       }
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
 
     return () => {
       window.removeEventListener(
@@ -115,9 +127,6 @@ export default function CardMenu({
     return null;
   }
 
-  /*
-   * Touch start
-   */
   const handleTouchStart = (
     event: React.TouchEvent<HTMLDivElement>
   ) => {
@@ -130,9 +139,6 @@ export default function CardMenu({
     isSwiping.current = true;
   };
 
-  /*
-   * Finger-following movement
-   */
   const handleTouchMove = (
     event: React.TouchEvent<HTMLDivElement>
   ) => {
@@ -142,16 +148,16 @@ export default function CardMenu({
       event.touches[0].clientX;
 
     const delta =
-      currentX.current - startX.current;
+      currentX.current -
+      startX.current;
 
     let offset = delta;
 
-    /*
-     * Resistance at first/last category.
-     */
     if (
-      (activeCategory === 0 && delta > 0) ||
-      (activeCategory === categories.length - 1 &&
+      (activeCategory === 0 &&
+        delta > 0) ||
+      (activeCategory ===
+        categories.length - 1 &&
         delta < 0)
     ) {
       offset = delta * 0.25;
@@ -160,72 +166,68 @@ export default function CardMenu({
     setDragOffset(offset);
   };
 
-  /*
-   * Finish swipe
-   */
   const handleTouchEnd = () => {
     if (!isSwiping.current) return;
 
     isSwiping.current = false;
 
     const delta =
-      currentX.current - startX.current;
+      currentX.current -
+      startX.current;
 
     const threshold = 60;
 
-    let nextCategory = activeCategory;
+    let nextCategory =
+      activeCategory;
 
-    /*
-     * Swipe left
-     */
     if (
       Math.abs(delta) >= threshold &&
       delta < 0 &&
-      activeCategory < categories.length - 1
+      activeCategory <
+        categories.length - 1
     ) {
-      nextCategory = activeCategory + 1;
+      nextCategory =
+        activeCategory + 1;
     }
 
-    /*
-     * Swipe right
-     */
     if (
       Math.abs(delta) >= threshold &&
       delta > 0 &&
       activeCategory > 0
     ) {
-      nextCategory = activeCategory - 1;
+      nextCategory =
+        activeCategory - 1;
     }
 
     setDragOffset(0);
 
-    if (nextCategory !== activeCategory) {
-      onCategoryChange(nextCategory);
+    if (
+      nextCategory !== activeCategory
+    ) {
+      onCategoryChange(
+        nextCategory
+      );
     }
   };
 
-  /*
-   * Cancelled touch
-   */
   const handleTouchCancel = () => {
     isSwiping.current = false;
     setDragOffset(0);
   };
 
-  /*
-   * Calculate horizontal movement relative to
-   * actual menu viewport width.
-   */
   const containerWidth =
-    containerRef.current?.clientWidth || 1;
+    containerRef.current?.clientWidth ||
+    1;
 
   const translate =
     -(activeCategory * 100) +
-    (dragOffset / containerWidth) * 100;
+    (dragOffset / containerWidth) *
+      100;
 
   return (
-    <section className="w-full overflow-hidden">
-      {/* Dynamic-height viewport */}
+    <section
+      className={`w-full overflow-hidden transition-colors duration-500 ${styles.page}`}
+    >
       <div
         ref={containerRef}
         className="w-full overflow-hidden"
@@ -243,13 +245,13 @@ export default function CardMenu({
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancel}
       >
-        {/* Horizontal slider */}
         <div
           className="flex w-full items-start"
           style={{
             transform: `translate3d(${translate}%, 0, 0)`,
             transition:
-              isSwiping.current || dragOffset !== 0
+              isSwiping.current ||
+              dragOffset !== 0
                 ? "none"
                 : "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
             willChange: "transform",
@@ -263,24 +265,109 @@ export default function CardMenu({
                   categoryRefs.current[index] =
                     element;
                 }}
-                className="w-full shrink-0 px-4 py-8 sm:px-6 lg:px-8"
+                className="w-full shrink-0 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12"
               >
                 <div className="mx-auto max-w-6xl">
-                  {/* Category heading */}
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                      {category.name}
-                    </h2>
+                  <div className="mb-7 sm:mb-9">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-[0.22em] ${styles.categoryDescription}`}
+                      >
+                        {String(
+                          index + 1
+                        ).padStart(2, "0")}
+                      </span>
+
+                      <span
+                        className={`h-px w-8 ${styles.categoryBorder.replace(
+                          "border-",
+                          "bg-"
+                        )}`}
+                      />
+
+                      <span
+                        className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${styles.categoryDescription}`}
+                      >
+                        Menu
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex items-end justify-between gap-4">
+                      <h2
+                        className={`
+                          text-2xl
+                          font-bold
+                          tracking-tight
+                          sm:text-3xl
+                          md:text-4xl
+                          ${styles.categoryTitle}
+                        `}
+                      >
+                        {category.name}
+                      </h2>
+
+                      <span
+                        className={`
+                          hidden
+                          shrink-0
+                          text-[10px]
+                          font-medium
+                          uppercase
+                          tracking-[0.18em]
+                          sm:block
+                          ${styles.categoryDescription}
+                        `}
+                      >
+                        {category.items.length}{" "}
+                        {category.items.length ===
+                        1
+                          ? "Item"
+                          : "Items"}
+                      </span>
+                    </div>
 
                     {category.description && (
-                      <p className="mt-2 max-w-2xl text-sm text-gray-500 sm:text-base">
-                        {category.description}
+                      <p
+                        className={`
+                          mt-2
+                          max-w-2xl
+                          text-sm
+                          leading-6
+                          sm:mt-3
+                          sm:text-base
+                          ${styles.categoryDescription}
+                        `}
+                      >
+                        {
+                          category.description
+                        }
                       </p>
                     )}
+
+                    <div className="mt-5 flex items-center gap-2 sm:mt-6">
+                      <span
+                        className={`
+                          h-1.5
+                          w-1.5
+                          rounded-full
+                          ${styles.navUnderline}
+                        `}
+                      />
+
+                      <span
+                        className={`
+                          h-px
+                          flex-1
+                          ${styles.categoryBorder.replace(
+                            "border-",
+                            "bg-"
+                          )}
+                        `}
+                      />
+                    </div>
                   </div>
 
-                  {/* Menu items */}
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                     {category.items.map(
                       (item) => {
                         const itemPrice =
@@ -292,67 +379,141 @@ export default function CardMenu({
                           );
 
                         const imageUrl =
-                          getMediaUrl(item.image);
+                          getMediaUrl(
+                            item.image
+                          );
 
                         return (
                           <article
                             key={item.id}
-                            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+                            className={`
+                              overflow-hidden
+                              rounded-2xl
+                              border
+                              transition-all
+                              duration-300
+                              ${styles.card}
+                            `}
                           >
-                            {/* Image */}
                             {imageUrl ? (
-                              <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                              <div
+                                className={`
+                                  aspect-[4/3]
+                                  overflow-hidden
+                                  ${styles.imageBackground}
+                                `}
+                              >
                                 <img
                                   src={imageUrl}
                                   alt={item.name}
                                   draggable={false}
-                                  className="h-full w-full select-none object-cover transition duration-300 hover:scale-105"
+                                  className="
+                                    h-full
+                                    w-full
+                                    select-none
+                                    object-cover
+                                    transition
+                                    duration-300
+                                    hover:scale-105
+                                  "
                                 />
                               </div>
                             ) : (
-                              <div className="flex aspect-[4/3] items-center justify-center bg-gray-100 text-sm text-gray-400">
+                              <div
+                                className={`
+                                  flex
+                                  aspect-[4/3]
+                                  items-center
+                                  justify-center
+                                  text-sm
+                                  ${styles.imageBackground}
+                                  ${styles.imagePlaceholder}
+                                `}
+                              >
                                 No image
                               </div>
                             )}
 
-                            {/* Content */}
                             <div className="p-5">
                               <div className="flex items-start justify-between gap-3">
-                                <h3 className="text-lg font-semibold text-gray-900">
+                                <h3
+                                  className={`text-lg font-semibold ${styles.itemName}`}
+                                >
                                   {item.name}
                                 </h3>
 
-                                {/* Vegetarian */}
                                 {item.vegetarian && (
                                   <span
-                                    className="mt-1 h-4 w-4 shrink-0 rounded-sm border-2 border-green-600"
+                                    className={`
+                                      mt-1
+                                      h-4
+                                      w-4
+                                      shrink-0
+                                      rounded-sm
+                                      border-2
+                                      ${styles.vegetarianBorder}
+                                    `}
                                     title="Vegetarian"
                                   >
-                                    <span className="mx-auto mt-[3px] block h-1.5 w-1.5 rounded-full bg-green-600" />
+                                    <span
+                                      className={`
+                                        mx-auto
+                                        mt-[3px]
+                                        block
+                                        h-1.5
+                                        w-1.5
+                                        rounded-full
+                                        ${styles.vegetarianDot}
+                                      `}
+                                    />
                                   </span>
                                 )}
                               </div>
 
-                              {/* Description */}
                               {item.description && (
-                                <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
-                                  {item.description}
+                                <p
+                                  className={`
+                                    mt-2
+                                    line-clamp-2
+                                    text-sm
+                                    leading-6
+                                    ${styles.description}
+                                  `}
+                                >
+                                  {
+                                    item.description
+                                  }
                                 </p>
                               )}
 
-                              {/* Price */}
                               {itemPrice && (
                                 <div className="mt-4">
-                                  <span className="text-lg font-bold text-gray-900">
-                                    {itemPrice}
+                                  <span
+                                    className={`
+                                      text-lg
+                                      font-bold
+                                      ${styles.price}
+                                    `}
+                                  >
+                                    {
+                                      itemPrice
+                                    }
                                   </span>
                                 </div>
                               )}
 
-                              {/* Variants */}
-                              {item.variants.length >
+                              {item.variants
+                                .length >
                                 0 && (
-                                <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                                <div
+                                  className={`
+                                    mt-4
+                                    space-y-2
+                                    border-t
+                                    pt-4
+                                    ${styles.variantBorder}
+                                  `}
+                                >
                                   {item.variants.map(
                                     (
                                       variant
@@ -372,14 +533,23 @@ export default function CardMenu({
                                           }
                                           className="flex items-center justify-between gap-3 text-sm"
                                         >
-                                          <span className="text-gray-700">
+                                          <span
+                                            className={
+                                              styles.variantName
+                                            }
+                                          >
                                             {
                                               variant.name
                                             }
                                           </span>
 
                                           {variantPrice && (
-                                            <span className="font-semibold text-gray-900">
+                                            <span
+                                              className={`
+                                                font-semibold
+                                                ${styles.variantPrice}
+                                              `}
+                                            >
                                               {
                                                 variantPrice
                                               }

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
+import RestaurantNav from "@/components/restaurant/RestaurantNav";
 import { getRestaurantMenu } from "@/lib/api";
-
 import MenuPageClient from "@/components/menu/MenuPageClient";
 
 interface MenuPageProps {
@@ -24,9 +24,16 @@ export default async function MenuPage({
   }
 
   return (
-    <MenuPageClient
-      restaurant={data.restaurant}
-      categories={data.categories}
-    />
+    <>
+      <RestaurantNav
+        restaurantSlug={restaurant}
+        theme={data.restaurant.menu_theme}
+      />
+
+      <MenuPageClient
+        restaurant={data.restaurant}
+        categories={data.categories}
+      />
+    </>
   );
 }

@@ -14,6 +14,25 @@ function getApiBaseUrl() {
   return PUBLIC_API_BASE_URL;
 }
 
+function getMediaBaseUrl() {
+  const publicBase = PUBLIC_API_BASE_URL;
+
+  if (
+    publicBase.startsWith("http://") ||
+    publicBase.startsWith("https://")
+  ) {
+    try {
+      const url = new URL(publicBase);
+
+      return url.origin;
+    } catch {
+      return publicBase.replace(/\/api\/?$/, "");
+    }
+  }
+
+  return "";
+}
+
 export function getMediaUrl(
   image: string | null
 ): string | null {
@@ -21,11 +40,6 @@ export function getMediaUrl(
     return null;
   }
 
-  /*
-   * If the API already returned a complete URL,
-   * preserve the media path but use the public API host
-   * when running locally.
-   */
   if (
     image.startsWith("http://") ||
     image.startsWith("https://")
@@ -34,20 +48,10 @@ export function getMediaUrl(
       const url = new URL(image);
 
       if (url.pathname.startsWith("/media/")) {
-        const publicBase = PUBLIC_API_BASE_URL;
+        const mediaBaseUrl = getMediaBaseUrl();
 
-        /*
-         * Local development:
-         * NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
-         *
-         * Production:
-         * NEXT_PUBLIC_API_URL=/api
-         */
-        if (
-          publicBase.startsWith("http://") ||
-          publicBase.startsWith("https://")
-        ) {
-          return `${publicBase}${url.pathname}${url.search}`;
+        if (mediaBaseUrl) {
+          return `${mediaBaseUrl}${url.pathname}${url.search}`;
         }
 
         return `${url.pathname}${url.search}`;
@@ -59,40 +63,24 @@ export function getMediaUrl(
     }
   }
 
-  /*
-   * Relative media path such as:
-   * /media/menus/...
-   */
   if (image.startsWith("/media/")) {
-    const publicBase = PUBLIC_API_BASE_URL;
+    const mediaBaseUrl = getMediaBaseUrl();
 
-    if (
-      publicBase.startsWith("http://") ||
-      publicBase.startsWith("https://")
-    ) {
-      return `${publicBase}${image}`;
+    if (mediaBaseUrl) {
+      return `${mediaBaseUrl}${image}`;
     }
 
     return image;
   }
 
-  /*
-   * Other absolute paths.
-   */
   if (image.startsWith("/")) {
     return image;
   }
 
-  /*
-   * Filename/path without /media/.
-   */
-  const publicBase = PUBLIC_API_BASE_URL;
+  const mediaBaseUrl = getMediaBaseUrl();
 
-  if (
-    publicBase.startsWith("http://") ||
-    publicBase.startsWith("https://")
-  ) {
-    return `${publicBase}/media/${image}`;
+  if (mediaBaseUrl) {
+    return `${mediaBaseUrl}/media/${image}`;
   }
 
   return `/media/${image}`;

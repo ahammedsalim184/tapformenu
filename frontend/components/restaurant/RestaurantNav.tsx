@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -9,8 +8,12 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import type { MenuTheme } from "@/types/menu";
+import { getMenuThemeStyles } from "@/components/menu/menuThemes";
+
 interface RestaurantNavProps {
   restaurantSlug: string;
+  theme?: MenuTheme;
 }
 
 const MOBILE_HANDLE = 48;
@@ -19,11 +22,14 @@ const PADDING = 4;
 
 export default function RestaurantNav({
   restaurantSlug,
+  theme,
 }: RestaurantNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   const isMenuPage = pathname.includes("/menu");
+
+  const menuStyles = getMenuThemeStyles(theme);
 
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -36,9 +42,6 @@ export default function RestaurantNav({
   const [dragging, setDragging] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
-  /*
-   * Get the actual slider dimensions.
-   */
   const updateDimensions = useCallback(() => {
     const track = trackRef.current;
 
@@ -57,10 +60,6 @@ export default function RestaurantNav({
     setMaxPosition(Math.max(0, max));
   }, []);
 
-  /*
-   * Measure when component loads
-   * and whenever screen size changes.
-   */
   useEffect(() => {
     updateDimensions();
 
@@ -77,9 +76,6 @@ export default function RestaurantNav({
     };
   }, [updateDimensions]);
 
-  /*
-   * Reset slider whenever we navigate.
-   */
   useEffect(() => {
     setPosition(0);
     setDragging(false);
@@ -91,9 +87,6 @@ export default function RestaurantNav({
     });
   }, [pathname, updateDimensions]);
 
-  /*
-   * Start dragging.
-   */
   const handlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>
   ) => {
@@ -112,9 +105,6 @@ export default function RestaurantNav({
     );
   };
 
-  /*
-   * Move with the finger/mouse.
-   */
   const handlePointerMove = (
     event: React.PointerEvent<HTMLDivElement>
   ) => {
@@ -124,13 +114,6 @@ export default function RestaurantNav({
       event.clientX -
       startXRef.current;
 
-    /*
-     * Home:
-     *   drag left → right
-     *
-     * Menu:
-     *   drag right → left
-     */
     const delta = isMenuPage
       ? -rawDelta
       : rawDelta;
@@ -139,9 +122,6 @@ export default function RestaurantNav({
       startPositionRef.current +
       delta;
 
-    /*
-     * Resistance outside boundaries.
-     */
     if (nextPosition < 0) {
       nextPosition =
         nextPosition * 0.2;
@@ -157,9 +137,6 @@ export default function RestaurantNav({
         excess * 0.2;
     }
 
-    /*
-     * Prevent excessive movement.
-     */
     nextPosition = Math.max(
       -35,
       Math.min(
@@ -171,19 +148,12 @@ export default function RestaurantNav({
     setPosition(nextPosition);
   };
 
-  /*
-   * Finish dragging.
-   */
   const finishDrag = () => {
     if (!draggingRef.current) return;
 
     draggingRef.current = false;
     setDragging(false);
 
-    /*
-     * Keep calculation inside
-     * the actual track.
-     */
     const safePosition = Math.max(
       0,
       Math.min(
@@ -197,9 +167,6 @@ export default function RestaurantNav({
         ? safePosition / maxPosition
         : 0;
 
-    /*
-     * 75% = successful slide.
-     */
     if (completion >= 0.75) {
       setPosition(maxPosition);
       setNavigating(true);
@@ -219,9 +186,6 @@ export default function RestaurantNav({
       return;
     }
 
-    /*
-     * Not enough → return to start.
-     */
     setPosition(0);
   };
 
@@ -232,9 +196,7 @@ export default function RestaurantNav({
       event.currentTarget.releasePointerCapture(
         event.pointerId
       );
-    } catch {
-      // Pointer capture may already be released.
-    }
+    } catch {}
 
     finishDrag();
   };
@@ -245,9 +207,6 @@ export default function RestaurantNav({
     setPosition(0);
   };
 
-  /*
-   * Percentage used for visual effects.
-   */
   const progress =
     maxPosition > 0
       ? Math.max(
@@ -259,31 +218,31 @@ export default function RestaurantNav({
         )
       : 0;
 
-  /*
-   * Visual position:
-   *
-   * Home:
-   *   handle starts LEFT
-   *   handle moves RIGHT
-   *
-   * Menu:
-   *   handle starts RIGHT
-   *   handle moves LEFT
-   */
   const visualPosition = isMenuPage
     ? maxPosition - position
     : position;
 
+  const isDarkMenu =
+    isMenuPage && theme === "dark";
+
   return (
-    <nav className="w-full bg-white">
-      {/* Same alignment as Hero and other sections */}
+    <nav
+      className={`
+        w-full
+        transition-colors
+        duration-500
+        ${
+          isDarkMenu
+            ? menuStyles.header
+            : "bg-white"
+        }
+      `}
+    >
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="flex w-full items-center justify-center py-3 sm:py-4">
-
-          {/* Slider */}
           <div
             ref={trackRef}
-            className="
+            className={`
               relative
               h-14
               w-full
@@ -291,38 +250,53 @@ export default function RestaurantNav({
               overflow-hidden
               rounded-full
               border
-              border-gray-200
-              bg-gray-100
               shadow-sm
+              transition-colors
+              duration-500
               sm:h-16
               sm:max-w-md
-            "
+              ${
+                isDarkMenu
+                  ? `${menuStyles.navBorder} bg-zinc-900`
+                  : "border-gray-200 bg-gray-100"
+              }
+            `}
             style={{
               touchAction: "none",
             }}
           >
-            {/* Inner surface */}
             <div
-              className="
+              className={`
                 pointer-events-none
                 absolute
                 inset-1
                 rounded-full
-                bg-white/50
-              "
+                transition-colors
+                duration-500
+                ${
+                  isDarkMenu
+                    ? "bg-white/[0.04]"
+                    : "bg-white/50"
+                }
+              `}
             />
 
-            {/* Progress area */}
             <div
-              className="
+              className={`
                 pointer-events-none
                 absolute
                 top-1
                 bottom-1
                 rounded-full
-                bg-white
                 shadow-sm
-              "
+                transition-colors
+                duration-500
+                ${
+                  isDarkMenu
+                    ? "bg-zinc-800"
+                    : "bg-white"
+                }
+              `}
               style={{
                 width:
                   maxPosition > 0
@@ -341,7 +315,6 @@ export default function RestaurantNav({
               }}
             />
 
-            {/* Center instruction */}
             <div
               className="
                 pointer-events-none
@@ -353,14 +326,18 @@ export default function RestaurantNav({
               "
             >
               <span
-                className="
+                className={`
                   text-[10px]
                   font-semibold
                   uppercase
                   tracking-[0.22em]
-                  text-gray-400
                   sm:text-[11px]
-                "
+                  ${
+                    isDarkMenu
+                      ? "text-zinc-500"
+                      : "text-gray-400"
+                  }
+                `}
                 style={{
                   opacity:
                     progress >= 0.7
@@ -375,7 +352,6 @@ export default function RestaurantNav({
               </span>
             </div>
 
-            {/* Direction arrows */}
             <div
               className={`
                 pointer-events-none
@@ -397,15 +373,33 @@ export default function RestaurantNav({
             >
               {isMenuPage ? (
                 <div className="flex items-center">
-                  <span className="-mr-1 text-lg text-gray-300">
+                  <span
+                    className={
+                      isDarkMenu
+                        ? "-mr-1 text-lg text-zinc-700"
+                        : "-mr-1 text-lg text-gray-300"
+                    }
+                  >
                     ‹
                   </span>
 
-                  <span className="-mr-1 text-xl text-gray-400">
+                  <span
+                    className={
+                      isDarkMenu
+                        ? "-mr-1 text-xl text-zinc-600"
+                        : "-mr-1 text-xl text-gray-400"
+                    }
+                  >
                     ‹
                   </span>
 
-                  <span className="text-2xl text-gray-500">
+                  <span
+                    className={
+                      isDarkMenu
+                        ? "text-2xl text-zinc-500"
+                        : "text-2xl text-gray-500"
+                    }
+                  >
                     ‹
                   </span>
                 </div>
@@ -426,7 +420,6 @@ export default function RestaurantNav({
               )}
             </div>
 
-            {/* Release text */}
             <div
               className="
                 pointer-events-none
@@ -448,22 +441,18 @@ export default function RestaurantNav({
               }}
             >
               <span
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.2em]
-                  text-gray-500
-                  sm:text-[11px]
-                "
+                className={
+                  isDarkMenu
+                    ? "text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 sm:text-[11px]"
+                    : "text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 sm:text-[11px]"
+                }
               >
                 Release
               </span>
             </div>
 
-            {/* Slider handle */}
             <div
-              className="
+              className={`
                 absolute
                 top-1
                 z-10
@@ -475,26 +464,27 @@ export default function RestaurantNav({
                 items-center
                 justify-center
                 rounded-full
-                bg-white
-                text-gray-950
                 shadow-md
+                transition-colors
+                duration-500
                 sm:top-1.5
                 sm:h-[52px]
                 sm:w-[52px]
-              "
+                ${
+                  isDarkMenu
+                    ? "bg-zinc-100 text-zinc-950"
+                    : "bg-white text-gray-950"
+                }
+              `}
               style={{
                 left: `${PADDING}px`,
-
                 transform: `translateX(${visualPosition}px)`,
-
                 transition: dragging
                   ? "none"
                   : "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
-
                 scale: dragging
                   ? "1.06"
                   : "1",
-
                 cursor: dragging
                   ? "grabbing"
                   : "grab",

@@ -1,3 +1,5 @@
+
+
 from django.db.models import Prefetch
 
 from rest_framework import status
@@ -564,6 +566,7 @@ class RestaurantMenuManagementView(APIView):
                     "slug": restaurant.slug,
                     "role": membership.role,
                     "menu_layout": restaurant.menu_layout,
+                    "menu_theme": restaurant.menu_theme,
                 },
                 "categories": serializer.data,
             }
@@ -1008,6 +1011,7 @@ class PublicRestaurantMenuView(APIView):
                     ),
 
                     "menu_layout": restaurant.menu_layout,
+                    "menu_theme": restaurant.menu_theme,
                 },
 
                 "signature_dishes": signature_dishes_data,
