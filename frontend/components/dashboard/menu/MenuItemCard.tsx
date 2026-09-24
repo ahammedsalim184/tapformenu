@@ -38,26 +38,52 @@ interface MenuItemCardProps {
   ) => void;
 }
 
-function getItemImageUrl(
-  image: string | null
-) {
+function getItemImageUrl(image: string | null) {
   if (!image) {
     return null;
   }
 
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://")
-  ) {
+  if (typeof window === "undefined") {
     return image;
   }
 
+  const hostname = window.location.hostname;
+
+  const isLocal =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.startsWith("192.168.") ||
+    hostname.startsWith("10.") ||
+    hostname.startsWith("172.");
+
   if (image.startsWith("/media/")) {
-    return `http://127.0.0.1:8000${image}`;
+    if (isLocal) {
+      return `http://${hostname}:8000${image}`;
+    }
+
+    return image;
   }
 
-  return `http://127.0.0.1:8000/media/${image}`;
+  if (
+    image.startsWith("http://127.0.0.1:8000") ||
+    image.startsWith("http://localhost:8000")
+  ) {
+    if (isLocal) {
+      return image.replace(
+        /^https?:\/\/(127\.0\.0\.1|localhost):8000/,
+        `http://${hostname}:8000`
+      );
+    }
+
+    return image.replace(
+      /^https?:\/\/(127\.0\.0\.1|localhost):8000/,
+      ""
+    );
+  }
+
+  return image;
 }
+
 
 export default function MenuItemCard({
   item,

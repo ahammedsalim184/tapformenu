@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { MenuCategory, MenuTheme } from "@/types/menu";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import type {
+  MenuCategory,
+  MenuTheme,
+} from "@/types/menu";
 import { getMenuThemeStyles } from "@/components/menu/menuThemes";
 
 interface MenuCategoryNavProps {
@@ -19,69 +26,227 @@ export default function MenuCategoryNav({
 }: MenuCategoryNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const [canScrollLeft, setCanScrollLeft] =
+    useState(false);
+  const [canScrollRight, setCanScrollRight] =
+    useState(false);
+
   const styles = getMenuThemeStyles(theme);
 
-  useEffect(() => {
-    const activeButton = buttonRefs.current[activeCategory];
+  const updateScrollState = () => {
+    const container = scrollRef.current;
 
-    if (!activeButton || !scrollRef.current) {
+    if (!container) {
       return;
     }
 
-    activeButton.scrollIntoView({
+    const maxScroll =
+      container.scrollWidth - container.clientWidth;
+
+    setCanScrollLeft(container.scrollLeft > 4);
+    setCanScrollRight(
+      maxScroll > 4 &&
+        container.scrollLeft < maxScroll - 4
+    );
+  };
+
+  useEffect(() => {
+    updateScrollState();
+
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.addEventListener(
+      "scroll",
+      updateScrollState,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "resize",
+      updateScrollState
+    );
+
+    return () => {
+      container.removeEventListener(
+        "scroll",
+        updateScrollState
+      );
+
+      window.removeEventListener(
+        "resize",
+        updateScrollState
+      );
+    };
+  }, [categories.length]);
+
+  useEffect(() => {
+    const activeButton =
+      buttonRefs.current[activeCategory];
+
+    const container = scrollRef.current;
+
+    if (!activeButton || !container) {
+      return;
+    }
+
+    const buttonLeft = activeButton.offsetLeft;
+    const buttonWidth = activeButton.offsetWidth;
+
+    const containerWidth =
+      container.clientWidth;
+
+    const targetScroll =
+      buttonLeft -
+      containerWidth / 2 +
+      buttonWidth / 2;
+
+    container.scrollTo({
+      left: Math.max(0, targetScroll),
       behavior: "smooth",
-      block: "nearest",
-      inline: "center",
     });
+
+    window.setTimeout(
+      updateScrollState,
+      350
+    );
   }, [activeCategory]);
 
   return (
     <nav
-      className={`sticky top-0 z-40 border-b transition-colors duration-500 ${styles.nav} ${styles.navBorder}`}
+      className={`
+        sticky
+        top-0
+        z-40
+        border-b
+        transition-colors
+        duration-500
+        ${styles.nav}
+        ${styles.navBorder}
+      `}
     >
       <div className="relative mx-auto max-w-6xl">
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto scrollbar-none"
+          className="
+            scrollbar-none
+            flex
+            w-full
+            overflow-x-auto
+            overscroll-x-contain
+            scroll-smooth
+          "
         >
-          {categories.map((category, index) => {
-            const active = index === activeCategory;
+          <div
+            className="
+              mx-auto
+              flex
+              min-w-max
+              items-center
+              px-2
+              sm:px-4
+            "
+          >
+            {categories.map(
+              (category, index) => {
+                const active =
+                  index === activeCategory;
 
-            return (
-              <button
-                key={category.id}
-                ref={(element) => {
-                  buttonRefs.current[index] = element;
-                }}
-                type="button"
-                onClick={() => onCategoryChange(index)}
-                className={`group relative shrink-0 px-5 py-4 text-sm font-medium transition-colors duration-300 sm:px-7 ${
-                  active
-                    ? styles.navActive
-                    : styles.navInactive
-                }`}
-              >
-                {category.name}
+                return (
+                  <button
+                    key={category.id}
+                    ref={(element) => {
+                      buttonRefs.current[index] =
+                        element;
+                    }}
+                    type="button"
+                    onClick={() =>
+                      onCategoryChange(index)
+                    }
+                    className={`
+                      group
+                      relative
+                      flex
+                      h-14
+                      shrink-0
+                      items-center
+                      justify-center
+                      px-4
+                      text-sm
+                      font-medium
+                      whitespace-nowrap
+                      transition-colors
+                      duration-300
+                      sm:h-15
+                      sm:px-6
+                      ${
+                        active
+                          ? styles.navActive
+                          : styles.navInactive
+                      }
+                    `}
+                  >
+                    <span className="relative">
+                      {category.name}
 
-                <span
-                  className={`absolute bottom-0 left-1/2 h-0.5 -translate-x-1/2 transition-all duration-300 ${
-                    active
-                      ? `w-8 ${styles.navUnderline}`
-                      : "w-0"
-                  }`}
-                />
-              </button>
-            );
-          })}
+                      <span
+                        className={`
+                          absolute
+                          -bottom-[17px]
+                          left-1/2
+                          h-0.5
+                          -translate-x-1/2
+                          rounded-full
+                          transition-all
+                          duration-300
+                          ${
+                            active
+                              ? `w-8 ${styles.navUnderline}`
+                              : "w-0"
+                          }
+                        `}
+                      />
+                    </span>
+                  </button>
+                );
+              }
+            )}
+          </div>
         </div>
 
-        <div
-          className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r ${styles.navFadeFrom} to-transparent`}
-        />
+        {canScrollLeft && (
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              inset-y-0
+              left-0
+              w-8
+              bg-gradient-to-r
+              ${styles.navFadeFrom}
+              to-transparent
+            `}
+          />
+        )}
 
-        <div
-          className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l ${styles.navFadeFrom} to-transparent`}
-        />
+        {canScrollRight && (
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              inset-y-0
+              right-0
+              w-8
+              bg-gradient-to-l
+              ${styles.navFadeFrom}
+              to-transparent
+            `}
+          />
+        )}
       </div>
     </nav>
   );

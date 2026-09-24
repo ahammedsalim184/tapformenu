@@ -2135,21 +2135,29 @@ export default function RestaurantMenuPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <main className="min-h-[100dvh] overflow-x-hidden bg-[#f6f6f3]">
+        <div className="mx-auto w-full max-w-xl px-3 pb-8 pt-3 sm:max-w-5xl sm:px-6 sm:pb-10 sm:pt-7">
           <div className="animate-pulse">
-            <div className="h-4 w-28 rounded bg-gray-200" />
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-gray-200" />
 
-            <div className="mt-5 h-9 w-44 rounded-lg bg-gray-200" />
-
-            <div className="mt-3 h-4 w-64 rounded bg-gray-200" />
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="h-28 rounded-2xl bg-white" />
-              <div className="h-28 rounded-2xl bg-white" />
+              <div className="h-5 w-20 rounded-lg bg-gray-200" />
             </div>
 
-            <div className="mt-8 h-64 rounded-2xl bg-white" />
+            <div className="mt-7 h-8 w-36 rounded-lg bg-gray-200" />
+
+            <div className="mt-2 h-4 w-60 rounded bg-gray-200" />
+
+            <div className="mt-5 grid grid-cols-2 gap-2.5">
+              <div className="h-20 rounded-2xl bg-white" />
+              <div className="h-20 rounded-2xl bg-white" />
+            </div>
+
+            <div className="mt-3 h-24 rounded-2xl bg-white" />
+
+            <div className="mt-4 h-11 rounded-2xl bg-white" />
+
+            <div className="mt-4 h-64 rounded-3xl bg-white" />
           </div>
         </div>
       </main>
@@ -2158,14 +2166,14 @@ export default function RestaurantMenuPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
-        <div className="mx-auto flex min-h-screen max-w-lg items-center px-5">
-          <div className="w-full rounded-3xl border border-red-100 bg-white p-7 shadow-sm">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-xl">
+      <main className="min-h-[100dvh] overflow-x-hidden bg-[#f6f6f3]">
+        <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl items-center px-3">
+          <div className="w-full rounded-[26px] border border-red-100 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.05)] sm:p-8">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-lg font-semibold text-red-500">
               !
             </div>
 
-            <h1 className="mt-5 text-xl font-semibold tracking-tight text-gray-950">
+            <h1 className="mt-4 text-lg font-semibold tracking-tight text-gray-950 sm:text-xl">
               Something went wrong
             </h1>
 
@@ -2176,7 +2184,23 @@ export default function RestaurantMenuPage() {
             <button
               type="button"
               onClick={loadMenu}
-              className="mt-6 w-full rounded-2xl bg-gray-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-800 active:scale-[0.98]"
+              className="
+                mt-5
+                flex
+                min-h-12
+                w-full
+                items-center
+                justify-center
+                rounded-2xl
+                bg-gray-950
+                px-5
+                text-sm
+                font-semibold
+                text-white
+                transition
+                hover:bg-gray-800
+                active:scale-[0.98]
+              "
             >
               Try again
             </button>
@@ -2197,98 +2221,130 @@ export default function RestaurantMenuPage() {
       0
     );
 
-  return (
-    <main className="min-h-screen bg-[#f7f7f5] pb-28 sm:pb-10">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center py-5 sm:py-7">
-          <button
-            type="button"
-            onClick={() =>
-              router.push(
-                `/dashboard/restaurants/${restaurantSlug}`
-              )
-            }
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-xl
-              px-2
-              py-2
-              text-sm
-              font-medium
-              text-gray-500
-              transition
-              hover:bg-white
-              hover:text-gray-950
-            "
-          >
-            <span className="text-lg leading-none">
-              ←
-            </span>
+  const activeCategory =
+    menu.categories.find(
+      (category) =>
+        category.id === activeCategoryId
+    );
 
-            <span className="hidden sm:inline">
-              Restaurant
-            </span>
-          </button>
+  return (
+    <main className="min-h-[100dvh] overflow-x-hidden bg-[#f6f6f3] pb-24 sm:pb-10">
+      <div className="mx-auto w-full max-w-xl min-w-0 px-3 sm:max-w-5xl sm:px-6 lg:px-8">
+
+        {/* APP HEADER */}
+        <header className="sticky top-0 z-40 -mx-3 border-b border-gray-200/70 bg-[#f6f6f3]/95 px-3 py-2.5 backdrop-blur-xl sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-7 sm:backdrop-blur-none">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/dashboard/restaurants/${restaurantSlug}`
+                )
+              }
+              aria-label="Back to restaurant"
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-2xl
+                text-lg
+                text-gray-600
+                transition
+                hover:bg-white
+                hover:text-gray-950
+                active:scale-[0.95]
+              "
+            >
+              ←
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+                Restaurant
+              </p>
+
+              <h1 className="truncate text-[16px] font-semibold tracking-tight text-gray-950 sm:text-2xl">
+                Menu
+              </h1>
+            </div>
+
+            <div className="hidden shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 sm:block">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                Manage
+              </span>
+            </div>
+          </div>
         </header>
 
-        <section className="mt-2 grid grid-cols-2 gap-3 sm:mt-4 sm:max-w-xl">
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] sm:p-5">
-            <p className="text-xs font-medium text-gray-400">
-              Categories
-            </p>
+        {/* STATS */}
+        <section className="mt-4 grid grid-cols-2 gap-2.5 sm:mt-6 sm:max-w-xl sm:gap-3">
+          <div className="rounded-[20px] border border-gray-200/80 bg-white p-3.5 shadow-[0_3px_18px_rgba(0,0,0,0.03)] sm:rounded-[22px] sm:p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+                Categories
+              </p>
+            </div>
 
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">
               {menu.categories.length}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] sm:p-5">
-            <p className="text-xs font-medium text-gray-400">
-              Menu items
-            </p>
+          <div className="rounded-[20px] border border-gray-200/80 bg-white p-3.5 shadow-[0_3px_18px_rgba(0,0,0,0.03)] sm:rounded-[22px] sm:p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+                Items
+              </p>
+            </div>
 
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">
               {totalItems}
             </p>
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-gray-200/80 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-gray-950">
-                Manage your menu
+        {/* QUICK ACTIONS */}
+        <section className="mt-3 rounded-[22px] border border-gray-200/80 bg-white p-3.5 shadow-[0_4px_24px_rgba(0,0,0,0.03)] sm:mt-6 sm:rounded-[26px] sm:p-5">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[14px] font-semibold text-gray-950 sm:text-[15px]">
+                Manage menu
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Add a category first, then add dishes to it.
+              <p className="mt-0.5 text-[11px] leading-5 text-gray-500 sm:mt-1 sm:text-sm">
+                Add and organize your menu.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:flex">
+            <div className="hidden shrink-0 gap-2 sm:flex">
               <button
                 type="button"
                 onClick={openAddCategory}
                 className="
+                  inline-flex
+                  h-11
+                  items-center
+                  justify-center
                   rounded-2xl
                   border
                   border-gray-200
                   bg-gray-50
                   px-4
-                  py-3
                   text-sm
                   font-semibold
                   text-gray-900
                   transition
                   hover:bg-gray-100
-                  active:scale-[0.98]
+                  active:scale-[0.97]
                 "
               >
-                <span className="mr-1">
+                <span className="mr-1 text-base">
                   +
                 </span>
+
                 Category
               </button>
 
@@ -2301,43 +2357,108 @@ export default function RestaurantMenuPage() {
                   menu.categories.length === 0
                 }
                 className="
+                  inline-flex
+                  h-11
+                  items-center
+                  justify-center
                   rounded-2xl
                   bg-gray-950
                   px-4
-                  py-3
                   text-sm
                   font-semibold
                   text-white
                   shadow-sm
                   transition
                   hover:bg-gray-800
-                  active:scale-[0.98]
+                  active:scale-[0.97]
                   disabled:cursor-not-allowed
                   disabled:bg-gray-200
                   disabled:text-gray-400
                 "
               >
-                <span className="mr-1">
+                <span className="mr-1 text-base">
                   +
                 </span>
-                Menu item
+
+                Item
               </button>
             </div>
           </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+            <button
+              type="button"
+              onClick={openAddCategory}
+              className="
+                flex
+                h-11
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-gray-200
+                bg-gray-50
+                text-xs
+                font-semibold
+                text-gray-800
+                transition
+                active:scale-[0.97]
+              "
+            >
+              <span className="mr-1 text-base">
+                +
+              </span>
+
+              Category
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                openAddItem()
+              }
+              disabled={
+                menu.categories.length === 0
+              }
+              className="
+                flex
+                h-11
+                items-center
+                justify-center
+                rounded-2xl
+                bg-gray-950
+                text-xs
+                font-semibold
+                text-white
+                transition
+                active:scale-[0.97]
+                disabled:cursor-not-allowed
+                disabled:bg-gray-200
+                disabled:text-gray-400
+              "
+            >
+              <span className="mr-1 text-base">
+                +
+              </span>
+
+              Item
+            </button>
+          </div>
         </section>
 
+        {/* EMPTY STATE */}
         {menu.categories.length === 0 && (
-          <section className="mt-5 overflow-hidden rounded-3xl border border-dashed border-gray-300 bg-white">
-            <div className="px-6 py-12 text-center sm:px-10 sm:py-16">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gray-950 text-2xl text-white shadow-lg">
+          <section className="mt-3 overflow-hidden rounded-[24px] border border-dashed border-gray-300 bg-white sm:mt-5 sm:rounded-[28px]">
+            <div className="px-4 py-10 text-center sm:px-10 sm:py-16">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[18px] bg-gray-950 text-lg text-white shadow-lg sm:h-14 sm:w-14 sm:rounded-[20px]">
                 +
               </div>
 
-              <h2 className="mt-6 text-xl font-semibold tracking-tight text-gray-950">
+              <h2 className="mt-4 text-lg font-semibold tracking-tight text-gray-950 sm:mt-5 sm:text-xl">
                 Start your menu
               </h2>
 
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">
+              <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-gray-500 sm:text-sm sm:leading-6">
                 Create your first category, such as
                 Starters, Main Course or Drinks.
               </p>
@@ -2346,7 +2467,9 @@ export default function RestaurantMenuPage() {
                 type="button"
                 onClick={openAddCategory}
                 className="
-                  mt-6
+                  mt-5
+                  w-full
+                  max-w-xs
                   rounded-2xl
                   bg-gray-950
                   px-6
@@ -2366,19 +2489,40 @@ export default function RestaurantMenuPage() {
           </section>
         )}
 
+        {/* MENU */}
         {menu.categories.length > 0 && (
-          <section className="mt-6">
-            <div className="sticky top-0 z-30 -mx-4 border-y border-gray-200/70 bg-[#f7f7f5]/95 backdrop-blur-xl sm:static sm:mx-0 sm:border-y-0 sm:bg-transparent sm:backdrop-blur-none">
+          <section className="mt-4 min-w-0 sm:mt-7">
+
+            {/* CATEGORY NAV */}
+            <div
+              className="
+                sticky
+                top-[61px]
+                z-30
+                -mx-3
+                border-y
+                border-gray-200/70
+                bg-[#f6f6f3]/95
+                backdrop-blur-xl
+                sm:static
+                sm:mx-0
+                sm:border-y-0
+                sm:bg-transparent
+                sm:backdrop-blur-none
+              "
+            >
               <div
                 className="
                   flex
-                  items-center
-                  gap-7
+                  min-w-0
+                  gap-1.5
                   overflow-x-auto
-                  px-4
-                  py-3
+                  overscroll-x-contain
+                  px-3
+                  py-2
                   scrollbar-none
-                  sm:px-1
+                  sm:gap-3
+                  sm:px-0
                   sm:py-2
                 "
               >
@@ -2399,33 +2543,30 @@ export default function RestaurantMenuPage() {
                           )
                         }
                         className={`
-                          relative
+                          flex
                           shrink-0
-                          pb-2
-                          text-sm
-                          font-medium
-                          transition-colors
+                          items-center
+                          rounded-full
+                          px-3
+                          py-2
+                          text-[11px]
+                          font-semibold
+                          transition
+                          active:scale-[0.97]
+                          sm:px-4
+                          sm:py-2.5
+                          sm:text-sm
                           ${
                             isActive
-                              ? "text-gray-950"
-                              : "text-gray-400 hover:text-gray-700"
+                              ? "bg-gray-950 text-white shadow-sm"
+                              : "bg-white text-gray-500 ring-1 ring-gray-200/80 hover:text-gray-900"
                           }
                         `}
                       >
-                        {category.name}
+                        <span className="max-w-[150px] truncate sm:max-w-none">
+                          {category.name}
+                        </span>
 
-                        {isActive && (
-                          <span
-                            className="
-                              absolute
-                              inset-x-0
-                              bottom-0
-                              h-0.5
-                              rounded-full
-                              bg-gray-950
-                            "
-                          />
-                        )}
                       </button>
                     );
                   }
@@ -2433,8 +2574,60 @@ export default function RestaurantMenuPage() {
               </div>
             </div>
 
+            {/* ACTIVE CATEGORY HEADER */}
+            {activeCategory && (
+              <div className="mt-4 flex min-w-0 items-end justify-between gap-3 sm:mt-7">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h2 className="min-w-0 truncate text-[19px] font-semibold tracking-[-0.03em] text-gray-950 sm:text-2xl">
+                      {activeCategory.name}
+                    </h2>
+                  </div>
+
+                  {activeCategory.description && (
+                    <p className="mt-1 max-w-xl truncate text-[11px] leading-5 text-gray-500 sm:mt-1.5 sm:text-sm">
+                      {activeCategory.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="hidden shrink-0 sm:block">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openAddItem(
+                        activeCategory.id
+                      )
+                    }
+                    className="
+                      rounded-2xl
+                      bg-gray-950
+                      px-4
+                      py-2.5
+                      text-sm
+                      font-semibold
+                      text-white
+                      transition
+                      hover:bg-gray-800
+                      active:scale-[0.98]
+                    "
+                  >
+                    + Add item
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY CONTENT */}
             <div
-              className="relative mt-5 overflow-hidden touch-pan-y"
+              className="
+                relative
+                mt-3
+                min-w-0
+                overflow-hidden
+                touch-pan-y
+                sm:mt-5
+              "
               onTouchStart={
                 handleCategoryTouchStart
               }
@@ -2462,6 +2655,7 @@ export default function RestaurantMenuPage() {
                   .map((category) => (
                     <div
                       key={category.id}
+                      className="min-w-0 rounded-[24px] sm:rounded-[30px]"
                     >
                       <MenuCategorySection
                         category={category}
@@ -2503,6 +2697,7 @@ export default function RestaurantMenuPage() {
           </section>
         )}
 
+        {/* FOOTER */}
         <div className="mt-8 hidden border-t border-gray-200 py-6 sm:block">
           <p className="text-center text-xs text-gray-400">
             Changes are saved directly to your restaurant menu.
@@ -2510,6 +2705,93 @@ export default function RestaurantMenuPage() {
         </div>
       </div>
 
+      {/* MOBILE BOTTOM ACTION BAR */}
+      {menu.categories.length > 0 && (
+        <div
+          className="
+            fixed
+            inset-x-0
+            bottom-0
+            z-40
+            border-t
+            border-gray-200/80
+            bg-white/95
+            px-3
+            pt-2
+            shadow-[0_-8px_30px_rgba(0,0,0,0.06)]
+            backdrop-blur-xl
+            sm:hidden
+          "
+          style={{
+            paddingBottom:
+              "max(0.6rem, env(safe-area-inset-bottom))",
+          }}
+        >
+          <div className="mx-auto flex w-full max-w-xl gap-2">
+            <button
+              type="button"
+              onClick={openAddCategory}
+              className="
+                flex
+                h-11
+                flex-1
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-gray-200
+                bg-gray-50
+                text-xs
+                font-semibold
+                text-gray-800
+                transition
+                active:scale-[0.97]
+              "
+            >
+              <span className="mr-1 text-base">
+                +
+              </span>
+
+              Category
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                openAddItem(
+                  activeCategory?.id
+                )
+              }
+              disabled={!activeCategory}
+              className="
+                flex
+                h-11
+                flex-[1.25]
+                items-center
+                justify-center
+                rounded-2xl
+                bg-gray-950
+                text-xs
+                font-semibold
+                text-white
+                transition
+                active:scale-[0.97]
+                disabled:cursor-not-allowed
+                disabled:bg-gray-200
+                disabled:text-gray-400
+              "
+            >
+              <span className="mr-1 text-base">
+                +
+              </span>
+
+              Add item
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CATEGORY MODAL */}
       <MenuCategoryModal
         open={showCategoryModal}
         mode={categoryModalMode}
@@ -2535,6 +2817,7 @@ export default function RestaurantMenuPage() {
         }
       />
 
+      {/* DELETE CATEGORY MODAL */}
       <DeleteCategoryModal
         open={
           showDeleteCategoryModal
@@ -2549,6 +2832,7 @@ export default function RestaurantMenuPage() {
         }
       />
 
+      {/* ITEM FORM */}
       <MenuItemForm
         open={showItemModal}
         categories={menu.categories}
@@ -2620,6 +2904,7 @@ export default function RestaurantMenuPage() {
         }
       />
 
+      {/* VARIANT FORM */}
       <MenuVariantForm
         open={showVariantModal}
         itemName={

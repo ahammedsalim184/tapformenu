@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import MenuCategory, MenuItem, MenuItemVariant
@@ -85,14 +86,14 @@ class MenuItemVariantSerializer(serializers.ModelSerializer):
 
             if price_min is not None:
                 errors["price_min"] = (
-                    "Leave minimum price empty when "
-                    "using a fixed price."
+                    "Leave minimum price empty when using "
+                    "a fixed price."
                 )
 
             if price_max is not None:
                 errors["price_max"] = (
-                    "Leave maximum price empty when "
-                    "using a fixed price."
+                    "Leave maximum price empty when using "
+                    "a fixed price."
                 )
 
         if errors:
@@ -185,14 +186,7 @@ class PublicMenuItemVariantSerializer(
         if not obj.image:
             return None
 
-        request = self.context.get("request")
-
-        if request:
-            return request.build_absolute_uri(
-                obj.image.url
-            )
-
-        return obj.image.url
+        return f"https://tapformenu.in{obj.image.url}"
 
 
 class PublicMenuItemSerializer(
@@ -225,14 +219,7 @@ class PublicMenuItemSerializer(
         if not obj.image:
             return None
 
-        request = self.context.get("request")
-
-        if request:
-            return request.build_absolute_uri(
-                obj.image.url
-            )
-
-        return obj.image.url
+        return f"https://tapformenu.in{obj.image.url}"
 
 
 class PublicMenuCategorySerializer(

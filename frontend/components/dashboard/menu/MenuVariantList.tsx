@@ -201,69 +201,7 @@ export default function MenuVariantList({
                 "
               >
                 <div className="flex min-h-[66px] items-center gap-3 p-3">
-                  {/* Variant image */}
-
-                  {variant.image ? (
-                    <div
-                      className="
-                        h-10
-                        w-10
-                        shrink-0
-                        overflow-hidden
-                        rounded-xl
-                        bg-gray-100
-                      "
-                    >
-                      <img
-                        src={variant.image}
-                        alt={variant.name}
-                        className="
-                          h-full
-                          w-full
-                          object-cover
-                          transition-transform
-                          duration-200
-                          group-hover:scale-105
-                        "
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      className="
-                        flex
-                        h-10
-                        w-10
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-xl
-                        bg-white
-                        text-gray-300
-                      "
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="h-4 w-4"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                      >
-                        <rect
-                          x="3"
-                          y="3"
-                          width="18"
-                          height="18"
-                          rx="3"
-                        />
-
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m8 15 3-3 2 2 2-2 4 4"
-                        />
-                      </svg>
-                    </div>
-                  )}
+                  
 
                   {/* Variant information */}
 

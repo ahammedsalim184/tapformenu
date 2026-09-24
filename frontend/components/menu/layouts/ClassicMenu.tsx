@@ -27,12 +27,24 @@ function formatPrice(
   priceMin: string | null,
   priceMax: string | null
 ) {
+  const cleanPrice = (value: string) => {
+    const number = Number(value);
+
+    if (Number.isInteger(number)) {
+      return number.toString();
+    }
+
+    return number.toString();
+  };
+
   if (priceRange && priceMin && priceMax) {
-    return `₹${parseFloat(priceMin)} - ₹${parseFloat(priceMax)}`;
+    return `₹${cleanPrice(priceMin)} - ₹${cleanPrice(
+      priceMax
+    )}`;
   }
 
   if (price) {
-    return `₹${parseFloat(price)}`;
+    return `₹${cleanPrice(price)}`;
   }
 
   return null;
@@ -216,7 +228,13 @@ export default function ClassicMenu({
 
   return (
     <section
-      className={`w-full overflow-hidden transition-colors duration-500 ${styles.page}`}
+      className={`
+        w-full
+        overflow-hidden
+        transition-colors
+        duration-500
+        ${styles.page}
+      `}
     >
       <div
         ref={containerRef}
@@ -255,47 +273,22 @@ export default function ClassicMenu({
                   categoryRefs.current[index] =
                     element;
                 }}
-                className="w-full shrink-0 px-4 py-8 sm:px-6 lg:px-8"
+                className="
+                  w-full
+                  shrink-0
+                  px-4
+                  pb-8
+                  pt-6
+                  sm:px-6
+                  sm:pb-10
+                  sm:pt-8
+                  lg:px-8
+                  lg:pb-12
+                  lg:pt-10
+                "
               >
                 <div className="mx-auto max-w-4xl">
-                  <div
-                    className={`
-                      mb-6
-                      border-b
-                      pb-3
-                      ${styles.categoryBorder}
-                    `}
-                  >
-                    <h2
-                      className={`
-                        text-2xl
-                        font-bold
-                        sm:text-3xl
-                        ${styles.categoryTitle}
-                      `}
-                    >
-                      {category.name}
-                    </h2>
-
-                    {category.description && (
-                      <p
-                        className={`
-                          mt-2
-                          text-sm
-                          ${styles.categoryDescription}
-                        `}
-                      >
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div
-                    className={`
-                      divide-y
-                      ${styles.categoryBorder}
-                    `}
-                  >
+                  <div className="space-y-3 sm:space-y-4">
                     {category.items.map(
                       (item) => {
                         const itemPrice =
@@ -314,19 +307,36 @@ export default function ClassicMenu({
                         return (
                           <article
                             key={item.id}
-                            className="flex gap-4 py-5"
+                            className={`
+                              group
+                              flex
+                              gap-4
+                              overflow-hidden
+                              rounded-2xl
+                              border
+                              p-2
+                              shadow-[0_4px_18px_rgba(0,0,0,0.07),0_0_12px_rgba(0,0,0,0.035)]
+                              transition-all
+                              duration-300
+                              hover:-translate-y-[2px]
+                              hover:shadow-[0_10px_28px_rgba(0,0,0,0.12),0_0_18px_rgba(0,0,0,0.06)]
+                              sm:gap-5
+                              sm:p-3
+                              ${styles.card}
+                            `}
                           >
-                            {imageUrl && (
+                            {imageUrl ? (
                               <div
                                 className={`
+                                  relative
                                   h-24
                                   w-24
                                   shrink-0
                                   overflow-hidden
                                   rounded-xl
-                                  ${styles.imageBackground}
                                   sm:h-28
                                   sm:w-28
+                                  ${styles.imageBackground}
                                 `}
                               >
                                 <img
@@ -334,22 +344,80 @@ export default function ClassicMenu({
                                   alt={item.name}
                                   draggable={false}
                                   className="
+                                    block
                                     h-full
                                     w-full
                                     select-none
                                     object-cover
+                                    transition-transform
+                                    duration-500
+                                    group-hover:scale-[1.035]
                                   "
                                 />
+
+                                {!item.available && (
+                                  <div
+                                    className="
+                                      absolute
+                                      inset-0
+                                      flex
+                                      items-center
+                                      justify-center
+                                      bg-black/35
+                                    "
+                                  >
+                                    <span
+                                      className="
+                                        rounded-full
+                                        bg-white/95
+                                        px-2.5
+                                        py-1
+                                        text-[9px]
+                                        font-bold
+                                        uppercase
+                                        tracking-wide
+                                        text-gray-800
+                                      "
+                                    >
+                                      Unavailable
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div
+                                className={`
+                                  flex
+                                  h-24
+                                  w-24
+                                  shrink-0
+                                  items-center
+                                  justify-center
+                                  rounded-xl
+                                  text-[10px]
+                                  sm:h-28
+                                  sm:w-28
+                                  ${styles.imageBackground}
+                                  ${styles.imagePlaceholder}
+                                `}
+                              >
+                                No image
                               </div>
                             )}
 
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1 py-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start gap-2">
                                     <h3
                                       className={`
+                                        min-w-0
+                                        break-words
+                                        text-[15px]
                                         font-semibold
+                                        leading-5
+                                        tracking-[-0.015em]
+                                        sm:text-[17px]
                                         ${styles.itemName}
                                       `}
                                     >
@@ -359,20 +427,21 @@ export default function ClassicMenu({
                                     {item.vegetarian && (
                                       <span
                                         className={`
+                                          mt-0.5
+                                          flex
                                           h-4
                                           w-4
                                           shrink-0
-                                          rounded-sm
-                                          border-2
+                                          items-center
+                                          justify-center
+                                          rounded-[4px]
+                                          border
                                           ${styles.vegetarianBorder}
                                         `}
                                         title="Vegetarian"
                                       >
                                         <span
                                           className={`
-                                            mx-auto
-                                            mt-[3px]
-                                            block
                                             h-1.5
                                             w-1.5
                                             rounded-full
@@ -386,9 +455,11 @@ export default function ClassicMenu({
                                   {item.description && (
                                     <p
                                       className={`
-                                        mt-1
-                                        text-sm
-                                        leading-6
+                                        mt-1.5
+                                        line-clamp-2
+                                        text-[12px]
+                                        leading-5
+                                        sm:text-[13px]
                                         ${styles.description}
                                       `}
                                     >
@@ -403,28 +474,20 @@ export default function ClassicMenu({
                                   <span
                                     className={`
                                       shrink-0
+                                      text-[15px]
                                       font-semibold
+                                      sm:text-[16px]
                                       ${styles.price}
                                     `}
                                   >
-                                    {
-                                      itemPrice
-                                    }
+                                    {itemPrice}
                                   </span>
                                 )}
                               </div>
 
                               {item.variants.length >
                                 0 && (
-                                <div
-                                  className={`
-                                    mt-3
-                                    space-y-1
-                                    border-t
-                                    pt-3
-                                    ${styles.variantBorder}
-                                  `}
-                                >
+                                <div className="mt-3 space-y-1">
                                   {item.variants.map(
                                     (
                                       variant
@@ -442,22 +505,52 @@ export default function ClassicMenu({
                                           key={
                                             variant.id
                                           }
-                                          className="flex justify-between gap-4 text-sm"
+                                          className="
+                                            flex
+                                            min-h-8
+                                            items-center
+                                            justify-between
+                                            gap-3
+                                            rounded-lg
+                                            px-2
+                                            py-1
+                                          "
                                         >
-                                          <span
-                                            className={
-                                              styles.variantName
-                                            }
-                                          >
-                                            {
-                                              variant.name
-                                            }
-                                          </span>
+                                          <div className="flex min-w-0 items-center gap-2">
+                                            <span
+                                              className={`
+                                                h-1
+                                                w-1
+                                                shrink-0
+                                                rounded-full
+                                                opacity-50
+                                                ${styles.navUnderline}
+                                              `}
+                                            />
+
+                                            <span
+                                              className={`
+                                                min-w-0
+                                                truncate
+                                                text-[11px]
+                                                font-medium
+                                                sm:text-[12px]
+                                                ${styles.variantName}
+                                              `}
+                                            >
+                                              {
+                                                variant.name
+                                              }
+                                            </span>
+                                          </div>
 
                                           {variantPrice && (
                                             <span
                                               className={`
-                                                font-medium
+                                                shrink-0
+                                                text-[11px]
+                                                font-semibold
+                                                sm:text-[12px]
                                                 ${styles.variantPrice}
                                               `}
                                             >

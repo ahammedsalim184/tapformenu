@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-type MenuLayout = "classic" | "cards" | "showcase";
+type MenuLayout = "classic" | "cards";
 type MenuTheme = "classic" | "dark";
 
 interface Restaurant {
@@ -24,6 +23,23 @@ interface Restaurant {
   role: "OWNER" | "STAFF";
 }
 
+const MENU_LAYOUTS: {
+  id: MenuLayout;
+  name: string;
+  description: string;
+}[] = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Simple and easy to read",
+  },
+  {
+    id: "cards",
+    name: "Cards",
+    description: "Modern item cards",
+  },
+];
+
 const MENU_THEMES: {
   id: MenuTheme;
   name: string;
@@ -32,114 +48,373 @@ const MENU_THEMES: {
   {
     id: "classic",
     name: "Classic",
-    description:
-      "Clean, bright and timeless for an easy-to-read menu.",
+    description: "Clean and bright",
   },
   {
     id: "dark",
     name: "Dark",
-    description:
-      "Modern, bold and premium with a dark presentation.",
+    description: "Modern and premium",
   },
 ];
 
-function ThemePreview({
+function MiniPhone({
+  children,
+  dark = false,
+}: {
+  children: ReactNode;
+  dark?: boolean;
+}) {
+  return (
+    <div className="mx-auto w-[108px]">
+      <div
+        className={`relative rounded-[22px] border-[3px] border-neutral-900 bg-neutral-950 p-[3px] shadow-[0_8px_20px_rgba(0,0,0,0.15)] ${
+          dark ? "shadow-black/30" : ""
+        }`}
+      >
+        <div className="relative h-[172px] overflow-hidden rounded-[17px]">
+          <div className="absolute left-1/2 top-1.5 z-20 h-[9px] w-[38px] -translate-x-1/2 rounded-full bg-neutral-900" />
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClassicLayoutPreview() {
+  return (
+    <MiniPhone>
+      <div className="h-full bg-white px-2.5 pb-2 pt-5">
+        <div className="mb-2">
+          <div className="h-1.5 w-12 rounded-full bg-neutral-900" />
+          <div className="mt-1 h-1 w-7 rounded-full bg-neutral-200" />
+        </div>
+
+        <div className="mb-2 flex gap-1 overflow-hidden">
+          <div className="rounded-full bg-neutral-900 px-2 py-1">
+            <div className="h-1 w-5 rounded-full bg-white" />
+          </div>
+
+          <div className="rounded-full bg-neutral-100 px-2 py-1">
+            <div className="h-1 w-5 rounded-full bg-neutral-400" />
+          </div>
+
+          <div className="rounded-full bg-neutral-100 px-2 py-1">
+            <div className="h-1 w-5 rounded-full bg-neutral-400" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-1.5 border-b border-neutral-100 pb-1.5"
+            >
+              <div className="h-7 w-7 shrink-0 rounded-md bg-neutral-200" />
+
+              <div className="min-w-0 flex-1">
+                <div className="h-1.5 w-12 rounded-full bg-neutral-800" />
+                <div className="mt-1 h-1 w-8 rounded-full bg-neutral-300" />
+              </div>
+
+              <div className="h-1.5 w-5 rounded-full bg-neutral-800" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </MiniPhone>
+  );
+}
+
+function CardsLayoutPreview() {
+  return (
+    <MiniPhone>
+      <div className="h-full bg-neutral-50 px-2.5 pb-2 pt-5">
+        <div className="mb-2">
+          <div className="h-1.5 w-12 rounded-full bg-neutral-900" />
+          <div className="mt-1 h-1 w-8 rounded-full bg-neutral-300" />
+        </div>
+
+        <div className="mb-2 flex gap-1 overflow-hidden">
+          <div className="rounded-full bg-neutral-900 px-2 py-1">
+            <div className="h-1 w-5 rounded-full bg-white" />
+          </div>
+
+          <div className="rounded-full bg-white px-2 py-1">
+            <div className="h-1 w-5 rounded-full bg-neutral-300" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div className="h-14 bg-gradient-to-br from-neutral-300 via-neutral-200 to-neutral-100" />
+
+            <div className="p-1.5">
+              <div className="h-1.5 w-14 rounded-full bg-neutral-800" />
+              <div className="mt-1 h-1 w-8 rounded-full bg-neutral-300" />
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div className="h-12 bg-gradient-to-br from-neutral-200 via-neutral-300 to-neutral-100" />
+
+            <div className="p-1.5">
+              <div className="h-1.5 w-11 rounded-full bg-neutral-800" />
+              <div className="mt-1 h-1 w-7 rounded-full bg-neutral-300" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </MiniPhone>
+  );
+}
+
+function MenuLayoutPreview({
+  layout,
+}: {
+  layout: MenuLayout;
+}) {
+  if (layout === "cards") {
+    return <CardsLayoutPreview />;
+  }
+
+  return <ClassicLayoutPreview />;
+}
+
+function ClassicThemePreview() {
+  return (
+    <MiniPhone>
+      <div className="h-full bg-white px-2.5 pb-2 pt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="h-1.5 w-12 rounded-full bg-neutral-900" />
+            <div className="mt-1 h-1 w-7 rounded-full bg-neutral-200" />
+          </div>
+
+          <div className="h-5 w-5 rounded-full bg-neutral-100" />
+        </div>
+
+        <div className="mb-3 h-8 rounded-lg bg-neutral-100 px-2 py-2">
+          <div className="h-1 w-10 rounded-full bg-neutral-300" />
+          <div className="mt-1.5 h-1.5 w-14 rounded-full bg-neutral-800" />
+        </div>
+
+        <div className="space-y-2">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-100 p-1.5"
+            >
+              <div className="h-8 w-8 rounded-md bg-neutral-200" />
+
+              <div className="flex-1">
+                <div className="h-1.5 w-10 rounded-full bg-neutral-800" />
+                <div className="mt-1 h-1 w-7 rounded-full bg-neutral-300" />
+              </div>
+
+              <div className="h-1.5 w-5 rounded-full bg-neutral-700" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </MiniPhone>
+  );
+}
+
+function DarkThemePreview() {
+  return (
+    <MiniPhone dark>
+      <div className="h-full bg-neutral-950 px-2.5 pb-2 pt-5 text-white">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="h-1.5 w-12 rounded-full bg-white" />
+            <div className="mt-1 h-1 w-7 rounded-full bg-white/30" />
+          </div>
+
+          <div className="h-5 w-5 rounded-full bg-white/10" />
+        </div>
+
+        <div className="mb-3 h-8 rounded-lg bg-white/10 px-2 py-2">
+          <div className="h-1 w-9 rounded-full bg-white/30" />
+          <div className="mt-1.5 h-1.5 w-13 rounded-full bg-white" />
+        </div>
+
+        <div className="space-y-2">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-1.5"
+            >
+              <div className="h-8 w-8 rounded-md bg-white/10" />
+
+              <div className="flex-1">
+                <div className="h-1.5 w-10 rounded-full bg-white/80" />
+                <div className="mt-1 h-1 w-7 rounded-full bg-white/20" />
+              </div>
+
+              <div className="h-1.5 w-5 rounded-full bg-white/60" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </MiniPhone>
+  );
+}
+
+function MenuThemePreview({
   theme,
 }: {
   theme: MenuTheme;
 }) {
-  if (theme === "dark") {
-    return (
-      <div className="overflow-hidden rounded-[20px] bg-[#0b0b0b] p-3 sm:p-4">
-        <div className="flex items-center justify-center gap-2">
-          <span className="h-px w-5 bg-zinc-800" />
-          <span className="h-1 w-1 rounded-full bg-zinc-700" />
-          <span className="h-1.5 w-1.5 rotate-45 bg-white" />
-          <span className="h-1 w-1 rounded-full bg-zinc-700" />
-          <span className="h-px w-5 bg-zinc-800" />
-        </div>
+  return theme === "dark" ? (
+    <DarkThemePreview />
+  ) : (
+    <ClassicThemePreview />
+  );
+}
 
-        <div className="mt-3 text-center">
-          <div className="mx-auto h-1.5 w-20 rounded-full bg-zinc-500" />
-          <div className="mx-auto mt-2 h-3 w-10 rounded-full bg-white/90" />
-        </div>
-
-        <div className="mt-4 flex gap-2 border-b border-zinc-800 pb-2">
-          <div className="h-1.5 w-12 rounded-full bg-white" />
-          <div className="h-1.5 w-10 rounded-full bg-zinc-700" />
-          <div className="h-1.5 w-10 rounded-full bg-zinc-700" />
-        </div>
-
-        <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="h-2 w-20 rounded-full bg-white/90" />
-              <div className="mt-2 h-1.5 w-28 rounded-full bg-zinc-700" />
-              <div className="mt-1 h-1.5 w-20 rounded-full bg-zinc-800" />
-            </div>
-
-            <div className="h-2 w-10 rounded-full bg-white/80" />
-          </div>
-        </div>
-
-        <div className="mt-2 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="h-2 w-24 rounded-full bg-white/90" />
-              <div className="mt-2 h-1.5 w-24 rounded-full bg-zinc-700" />
-            </div>
-
-            <div className="h-2 w-10 rounded-full bg-white/80" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+function CheckIcon() {
   return (
-    <div className="overflow-hidden rounded-[20px] bg-[#f7f7f5] p-3 sm:p-4">
-      <div className="flex items-center justify-center gap-2">
-        <span className="h-px w-5 bg-gray-200" />
-        <span className="h-1 w-1 rounded-full bg-gray-300" />
-        <span className="h-1.5 w-1.5 rotate-45 bg-gray-900" />
-        <span className="h-1 w-1 rounded-full bg-gray-300" />
-        <span className="h-px w-5 bg-gray-200" />
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3.5 w-3.5"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <path
+        d="M5 10.5 8.2 14 15 6.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-5 w-5"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        d="M19 12H5M12 19l-7-7 7-7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SaveIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-4 w-4"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        d="M5 4h11l3 3v13H5V4Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M8 4v5h8V4M8 20v-7h8v7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SettingsSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4">
+        <h2 className="text-[15px] font-semibold text-neutral-950">
+          {title}
+        </h2>
+
+        {description && (
+          <p className="mt-1 text-xs leading-5 text-neutral-500">
+            {description}
+          </p>
+        )}
       </div>
 
-      <div className="mt-3 text-center">
-        <div className="mx-auto h-1.5 w-20 rounded-full bg-gray-400" />
-        <div className="mx-auto mt-2 h-3 w-10 rounded-full bg-gray-950" />
-      </div>
+      {children}
+    </section>
+  );
+}
 
-      <div className="mt-4 flex gap-2 border-b border-gray-200 pb-2">
-        <div className="h-1.5 w-12 rounded-full bg-gray-950" />
-        <div className="h-1.5 w-10 rounded-full bg-gray-300" />
-        <div className="h-1.5 w-10 rounded-full bg-gray-300" />
-      </div>
+function InputField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-neutral-600">
+        {label}
+      </span>
 
-      <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="h-2 w-20 rounded-full bg-gray-900" />
-            <div className="mt-2 h-1.5 w-28 rounded-full bg-gray-300" />
-            <div className="mt-1 h-1.5 w-20 rounded-full bg-gray-200" />
-          </div>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-11 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white"
+      />
+    </label>
+  );
+}
 
-          <div className="h-2 w-10 rounded-full bg-gray-900" />
-        </div>
-      </div>
+function TextareaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-neutral-600">
+        {label}
+      </span>
 
-      <div className="mt-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="h-2 w-24 rounded-full bg-gray-900" />
-            <div className="mt-2 h-1.5 w-24 rounded-full bg-gray-300" />
-          </div>
-
-          <div className="h-2 w-10 rounded-full bg-gray-900" />
-        </div>
-      </div>
-    </div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={4}
+        className="w-full resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white"
+      />
+    </label>
   );
 }
 
@@ -147,7 +422,9 @@ export default function RestaurantSettingsPage() {
   const params = useParams();
   const router = useRouter();
 
-  const restaurantSlug = params.restaurant as string;
+  const restaurantSlug = Array.isArray(params.restaurant)
+    ? params.restaurant[0]
+    : params.restaurant;
 
   const [restaurant, setRestaurant] =
     useState<Restaurant | null>(null);
@@ -160,138 +437,136 @@ export default function RestaurantSettingsPage() {
   const [openingHours, setOpeningHours] = useState("");
 
   const [menuLayout, setMenuLayout] =
-    useState<MenuLayout>("cards");
+    useState<MenuLayout>("classic");
 
   const [menuTheme, setMenuTheme] =
     useState<MenuTheme>("classic");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function loadRestaurant() {
-    const token =
-      localStorage.getItem("access_token") ||
-      sessionStorage.getItem("access_token");
+  const clearTokens = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
 
-    if (!token) {
-      router.replace("/login");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+  };
+
+  const loadRestaurant = async () => {
+    if (!restaurantSlug) {
       return;
     }
 
-    setLoading(true);
-    setError("");
-
     try {
+      setError("");
+
+      const token =
+        localStorage.getItem("access_token") ||
+        sessionStorage.getItem("access_token");
+
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/restaurants/${restaurantSlug}/`,
         {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
           cache: "no-store",
         }
       );
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let data: any = {};
-
-      if (contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        throw new Error(
-          `Server returned an unexpected response (${response.status}).`
-        );
-      }
-
       if (response.status === 401) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-
-        sessionStorage.removeItem("access_token");
-        sessionStorage.removeItem("refresh_token");
-
+        clearTokens();
         router.replace("/login");
         return;
       }
 
+      const data = await response.json();
+
       if (!response.ok) {
         throw new Error(
           data?.detail ||
+            data?.message ||
             "Unable to load restaurant settings."
         );
       }
 
-      const restaurantData =
-        data as Restaurant;
+      setRestaurant(data);
 
-      setRestaurant(restaurantData);
-
-      setName(restaurantData.name || "");
-      setDescription(
-        restaurantData.description || ""
-      );
-      setPhone(restaurantData.phone || "");
-      setEmail(restaurantData.email || "");
-      setAddress(restaurantData.address || "");
-      setOpeningHours(
-        restaurantData.opening_hours || ""
-      );
+      setName(data.name || "");
+      setDescription(data.description || "");
+      setPhone(data.phone || "");
+      setEmail(data.email || "");
+      setAddress(data.address || "");
+      setOpeningHours(data.opening_hours || "");
 
       setMenuLayout(
-        restaurantData.menu_layout || "cards"
+        data.menu_layout === "cards"
+          ? "cards"
+          : "classic"
       );
 
       setMenuTheme(
-        restaurantData.menu_theme === "dark"
+        data.menu_theme === "dark"
           ? "dark"
           : "classic"
       );
-    } catch (error) {
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "Unable to load restaurant settings."
       );
-    } finally {
-      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadRestaurant();
-  }, [restaurantSlug]);
-
-  async function handleSave(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
-
-    const token =
-      localStorage.getItem("access_token") ||
-      sessionStorage.getItem("access_token");
-
-    if (!token) {
-      router.replace("/login");
+    if (!restaurantSlug) {
       return;
     }
 
+    const initialLoad = async () => {
+      try {
+        setLoading(true);
+        await loadRestaurant();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initialLoad();
+  }, [restaurantSlug]);
+
+  const handleSave = async () => {
     if (!name.trim()) {
       setError("Restaurant name is required.");
       setSuccess("");
       return;
     }
 
-    setSaving(true);
-    setError("");
-    setSuccess("");
-
     try {
+      setSaving(true);
+      setError("");
+      setSuccess("");
+
+      const token =
+        localStorage.getItem("access_token") ||
+        sessionStorage.getItem("access_token");
+
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/restaurants/${restaurantSlug}/`,
         {
@@ -313,160 +588,75 @@ export default function RestaurantSettingsPage() {
         }
       );
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let data: any = {};
-
-      if (contentType.includes("application/json")) {
-        data = await response.json();
-      }
-
       if (response.status === 401) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-
-        sessionStorage.removeItem("access_token");
-        sessionStorage.removeItem("refresh_token");
-
+        clearTokens();
         router.replace("/login");
         return;
       }
 
+      const data = await response.json();
+
       if (!response.ok) {
-        if (
-          data &&
-          typeof data === "object" &&
-          data.detail
-        ) {
-          throw new Error(data.detail);
-        }
-
-        if (
-          data &&
-          typeof data === "object" &&
-          data.menu_layout
-        ) {
-          const layoutError =
-            Array.isArray(data.menu_layout)
-              ? data.menu_layout[0]
-              : data.menu_layout;
-
-          throw new Error(String(layoutError));
-        }
-
-        if (
-          data &&
-          typeof data === "object" &&
-          data.menu_theme
-        ) {
-          const themeError =
-            Array.isArray(data.menu_theme)
-              ? data.menu_theme[0]
-              : data.menu_theme;
-
-          throw new Error(String(themeError));
-        }
-
         throw new Error(
-          "Unable to save restaurant settings."
+          data?.detail ||
+            data?.message ||
+            "Unable to save restaurant settings."
         );
       }
 
-      const updatedRestaurant =
-        data as Restaurant;
-
-      setRestaurant(updatedRestaurant);
-
-      setName(updatedRestaurant.name || "");
-      setDescription(
-        updatedRestaurant.description || ""
-      );
-      setPhone(updatedRestaurant.phone || "");
-      setEmail(updatedRestaurant.email || "");
-      setAddress(updatedRestaurant.address || "");
-      setOpeningHours(
-        updatedRestaurant.opening_hours || ""
-      );
-
-      setMenuLayout(
-        updatedRestaurant.menu_layout || "cards"
-      );
-
-      setMenuTheme(
-        updatedRestaurant.menu_theme === "dark"
-          ? "dark"
-          : "classic"
-      );
-
+      setRestaurant(data);
       setSuccess("Settings saved successfully.");
 
       await loadRestaurant();
-    } catch (error) {
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "Unable to save restaurant settings."
       );
     } finally {
       setSaving(false);
     }
-  }
+  };
+
+  const handleCancel = () => {
+    if (!restaurant) {
+      return;
+    }
+
+    setName(restaurant.name || "");
+    setDescription(restaurant.description || "");
+    setPhone(restaurant.phone || "");
+    setEmail(restaurant.email || "");
+    setAddress(restaurant.address || "");
+    setOpeningHours(restaurant.opening_hours || "");
+
+    setMenuLayout(
+      restaurant.menu_layout === "cards"
+        ? "cards"
+        : "classic"
+    );
+
+    setMenuTheme(
+      restaurant.menu_theme === "dark"
+        ? "dark"
+        : "classic"
+    );
+
+    setError("");
+    setSuccess("");
+  };
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <header className="flex items-center py-5 sm:py-7">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/dashboard/restaurants/${restaurantSlug}`
-                )
-              }
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                px-2
-                py-2
-                text-sm
-                font-medium
-                text-gray-500
-                transition
-                hover:bg-white
-                hover:text-gray-950
-              "
-            >
-              <span className="text-lg leading-none">
-                ←
-              </span>
+      <main className="min-h-screen bg-neutral-50">
+        <div className="mx-auto max-w-3xl px-4 py-5">
+          <div className="mb-6 h-8 w-32 animate-pulse rounded-lg bg-neutral-200" />
 
-              <span className="hidden sm:inline">
-                Restaurant
-              </span>
-            </button>
-          </header>
-
-          <div className="py-20 text-center">
-            <div
-              className="
-                mx-auto
-                h-8
-                w-8
-                animate-spin
-                rounded-full
-                border-2
-                border-gray-200
-                border-t-gray-950
-              "
-            />
-
-            <p className="mt-4 text-sm text-gray-500">
-              Loading settings...
-            </p>
+          <div className="space-y-4">
+            <div className="h-48 animate-pulse rounded-2xl bg-white" />
+            <div className="h-48 animate-pulse rounded-2xl bg-white" />
+            <div className="h-48 animate-pulse rounded-2xl bg-white" />
           </div>
         </div>
       </main>
@@ -475,267 +665,92 @@ export default function RestaurantSettingsPage() {
 
   if (!restaurant) {
     return (
-      <main className="min-h-screen bg-[#f7f7f5]">
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-          <div
-            className="
-              rounded-[24px]
-              border
-              border-red-200
-              bg-white
-              p-6
-            "
+      <main className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
+          <h1 className="text-base font-semibold text-neutral-950">
+            Restaurant not found
+          </h1>
+
+          <p className="mt-2 text-sm text-neutral-500">
+            We could not load this restaurant.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mt-5 h-10 rounded-xl bg-neutral-950 px-5 text-sm font-medium text-white"
           >
-            <h1 className="text-xl font-semibold text-gray-950">
-              Unable to load settings
-            </h1>
-
-            <p className="mt-2 text-sm leading-6 text-red-600">
-              {error ||
-                "Restaurant information could not be loaded."}
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/dashboard/restaurants/${restaurantSlug}`
-                )
-              }
-              className="
-                mt-6
-                rounded-xl
-                bg-gray-950
-                px-5
-                py-3
-                text-sm
-                font-semibold
-                text-white
-                transition
-                hover:bg-gray-800
-              "
-            >
-              Back to Restaurant
-            </button>
-          </div>
+            Go back
+          </button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] pb-28 sm:pb-10">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between py-5 sm:py-7">
-          <button
-            type="button"
-            onClick={() =>
-              router.push(
-                `/dashboard/restaurants/${restaurantSlug}`
-              )
-            }
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-xl
-              px-2
-              py-2
-              text-sm
-              font-medium
-              text-gray-500
-              transition
-              hover:bg-white
-              hover:text-gray-950
-            "
-          >
-            <span className="text-lg leading-none">
-              ←
-            </span>
+    <main className="min-h-screen bg-neutral-50 pb-28">
+      <div className="mx-auto w-full max-w-3xl">
 
-            <span className="hidden sm:inline">
-              Restaurant
-            </span>
-          </button>
+        <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-neutral-50/95 backdrop-blur">
+          <div className="flex h-14 items-center gap-3 px-4">
 
-          <div
-            className="
-              flex
-              h-9
-              items-center
-              rounded-xl
-              bg-white
-              px-3
-              shadow-sm
-              ring-1
-              ring-black/[0.04]
-              sm:h-10
-            "
-          >
-            <span
-              className="
-                mr-2
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-emerald-500
-              "
-            />
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Go back"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-800 transition active:scale-95"
+            >
+              <ArrowLeftIcon />
+            </button>
 
-            <span className="text-[11px] font-semibold text-gray-700 sm:text-xs">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-neutral-950">
+                Settings
+              </p>
+
+              <p className="truncate text-[11px] text-neutral-500">
+                {restaurant.name}
+              </p>
+            </div>
+
+            <div className="rounded-full bg-neutral-900 px-2.5 py-1 text-[10px] font-semibold text-white">
               {restaurant.role}
-            </span>
+            </div>
+
           </div>
         </header>
 
-        <section className="pt-4 sm:pt-10">
-          <div
-            className="
-              relative
-              overflow-hidden
-              rounded-[26px]
-              bg-[#181512]
-              px-5
-              py-7
-              text-white
-              shadow-[0_18px_50px_rgba(24,21,18,0.12)]
-              sm:rounded-[28px]
-              sm:px-8
-              sm:py-10
-            "
-          >
-            <div
-              aria-hidden="true"
-              className="
-                pointer-events-none
-                absolute
-                -right-20
-                -top-20
-                h-56
-                w-56
-                rounded-full
-                border
-                border-white/10
-              "
-            />
+        <div className="space-y-4 px-4 py-5">
 
-            <div
-              aria-hidden="true"
-              className="
-                pointer-events-none
-                absolute
-                -bottom-24
-                -left-20
-                h-48
-                w-48
-                rounded-full
-                bg-white/[0.03]
-              "
-            />
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-neutral-950">
+              Restaurant settings
+            </h1>
 
-            <div className="relative">
-              <p
-                className="
-                  text-[10px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.16em]
-                  text-white/45
-                  sm:text-[11px]
-                "
-              >
-                Restaurant configuration
-              </p>
-
-              <h1
-                className="
-                  mt-2
-                  text-[30px]
-                  font-bold
-                  tracking-[-0.045em]
-                  sm:mt-3
-                  sm:text-4xl
-                "
-              >
-                Settings
-              </h1>
-
-              <p
-                className="
-                  mt-3
-                  max-w-2xl
-                  text-[13px]
-                  leading-5
-                  text-white/55
-                  sm:text-[15px]
-                  sm:leading-6
-                "
-              >
-                Update your restaurant information and
-                customize how your public menu looks.
-              </p>
-            </div>
+            <p className="mt-1 text-sm text-neutral-500">
+              Manage your restaurant information and menu appearance.
+            </p>
           </div>
-        </section>
 
-        <form onSubmit={handleSave} className="mt-8 sm:mt-10">
-          <section>
-            <div className="mb-4">
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#aaa39b]
-                  sm:text-[11px]
-                "
-              >
-                Public menu
-              </p>
-
-              <h2
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  tracking-[-0.025em]
-                  text-[#181512]
-                "
-              >
-                Menu layout
-              </h2>
-
-              <p className="mt-1 text-[13px] leading-5 text-[#88827b] sm:text-sm">
-                Choose how your restaurant menu appears
-                to customers.
-              </p>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
+              {error}
             </div>
+          )}
 
-            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-              {[
-                {
-                  id: "classic" as MenuLayout,
-                  icon: "☰",
-                  name: "Classic",
-                  description:
-                    "A simple traditional menu with clear categories and items.",
-                },
-                {
-                  id: "cards" as MenuLayout,
-                  icon: "▦",
-                  name: "Cards",
-                  description:
-                    "Visual cards that give menu items a modern presentation.",
-                },
-                {
-                  id: "showcase" as MenuLayout,
-                  icon: "✦",
-                  name: "Showcase",
-                  description:
-                    "A more visual layout designed to highlight menu items.",
-                },
-              ].map((layout) => {
+          {success && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-sm text-emerald-700">
+              {success}
+            </div>
+          )}
+
+          <SettingsSection
+            title="Menu layout"
+            description="Choose how your menu items are presented."
+          >
+            <div className="grid grid-cols-2 gap-2.5">
+
+              {MENU_LAYOUTS.map((layout) => {
                 const selected =
                   menuLayout === layout.id;
 
@@ -746,108 +761,46 @@ export default function RestaurantSettingsPage() {
                     onClick={() =>
                       setMenuLayout(layout.id)
                     }
-                    disabled={saving}
-                    className={`
-                      relative
-                      rounded-[22px]
-                      border
-                      p-4
-                      text-left
-                      transition-all
-                      duration-200
-                      sm:p-5
-                      ${
-                        selected
-                          ? "border-gray-950 bg-gray-950 text-white shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
-                          : "border-black/[0.06] bg-white text-gray-950 hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(0,0,0,0.06)]"
-                      }
-                      disabled:cursor-not-allowed
-                      disabled:opacity-70
-                    `}
+                    className={`relative min-w-0 rounded-2xl border p-2.5 text-left transition ${
+                      selected
+                        ? "border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950"
+                        : "border-neutral-200 bg-white hover:border-neutral-300"
+                    }`}
                   >
-                    <div
-                      className={`
-                        flex
-                        h-10
-                        w-10
-                        items-center
-                        justify-center
-                        rounded-xl
-                        text-base
-                        ${
-                          selected
-                            ? "bg-white/10"
-                            : "bg-[#f5f2ee]"
-                        }
-                      `}
-                    >
-                      {layout.icon}
-                    </div>
-
-                    <h3 className="mt-4 text-[15px] font-semibold">
-                      {layout.name}
-                    </h3>
-
-                    <p
-                      className={`
-                        mt-1.5
-                        text-[13px]
-                        leading-5
-                        ${
-                          selected
-                            ? "text-white/55"
-                            : "text-[#88827b]"
-                        }
-                      `}
-                    >
-                      {layout.description}
-                    </p>
-
                     {selected && (
-                      <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-gray-950">
-                        ✓
-                      </span>
+                      <div className="absolute right-2 top-2 z-30 flex h-5 w-5 items-center justify-center rounded-full bg-neutral-950 text-white shadow-sm">
+                        <CheckIcon />
+                      </div>
                     )}
+
+                    <MenuLayoutPreview
+                      layout={layout.id}
+                    />
+
+                    <div className="mt-2.5 px-0.5">
+
+                      <h3 className="truncate text-xs font-semibold text-neutral-950">
+                        {layout.name}
+                      </h3>
+
+                      <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-neutral-500">
+                        {layout.description}
+                      </p>
+
+                    </div>
                   </button>
                 );
               })}
+
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="mt-9 sm:mt-10">
-            <div className="mb-4">
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#aaa39b]
-                  sm:text-[11px]
-                "
-              >
-                Public menu
-              </p>
+          <SettingsSection
+            title="Menu theme"
+            description="Choose the visual style of your public menu."
+          >
+            <div className="grid grid-cols-2 gap-2.5">
 
-              <h2
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  tracking-[-0.025em]
-                  text-[#181512]
-                "
-              >
-                Menu theme
-              </h2>
-
-              <p className="mt-1 text-[13px] leading-5 text-[#88827b] sm:text-sm">
-                Choose the visual style customers will
-                see when they open your menu.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {MENU_THEMES.map((theme) => {
                 const selected =
                   menuTheme === theme.id;
@@ -859,606 +812,128 @@ export default function RestaurantSettingsPage() {
                     onClick={() =>
                       setMenuTheme(theme.id)
                     }
-                    disabled={saving}
-                    className={`
-                      group
-                      relative
-                      overflow-hidden
-                      rounded-[24px]
-                      border
-                      bg-white
-                      p-2.5
-                      text-left
-                      transition-all
-                      duration-200
-                      sm:p-3
-                      ${
-                        selected
-                          ? "border-gray-950 shadow-[0_14px_40px_rgba(0,0,0,0.10)] ring-2 ring-gray-950/10"
-                          : "border-black/[0.06] hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(0,0,0,0.06)]"
-                      }
-                      disabled:cursor-not-allowed
-                      disabled:opacity-70
-                    `}
+                    className={`relative min-w-0 rounded-2xl border p-2.5 text-left transition ${
+                      selected
+                        ? "border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950"
+                        : "border-neutral-200 bg-white hover:border-neutral-300"
+                    }`}
                   >
-                    <ThemePreview theme={theme.id} />
-
-                    <div className="px-2 pb-2 pt-3.5 sm:pt-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-[15px] font-semibold text-[#181512] sm:text-base">
-                            {theme.name}
-                          </h3>
-
-                          <p className="mt-1 text-[12px] leading-5 text-[#88827b] sm:text-sm">
-                            {theme.description}
-                          </p>
-                        </div>
-
-                        {selected && (
-                          <span
-                            className="
-                              flex
-                              h-6
-                              w-6
-                              shrink-0
-                              items-center
-                              justify-center
-                              rounded-full
-                              bg-gray-950
-                              text-xs
-                              font-bold
-                              text-white
-                            "
-                          >
-                            ✓
-                          </span>
-                        )}
+                    {selected && (
+                      <div className="absolute right-2 top-2 z-30 flex h-5 w-5 items-center justify-center rounded-full bg-neutral-950 text-white shadow-sm">
+                        <CheckIcon />
                       </div>
+                    )}
+
+                    <MenuThemePreview
+                      theme={theme.id}
+                    />
+
+                    <div className="mt-2.5 px-0.5">
+
+                      <h3 className="text-xs font-semibold text-neutral-950">
+                        {theme.name}
+                      </h3>
+
+                      <p className="mt-0.5 text-[10px] leading-4 text-neutral-500">
+                        {theme.description}
+                      </p>
+
                     </div>
                   </button>
                 );
               })}
+
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="mt-9 sm:mt-10">
-            <div className="mb-4">
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#aaa39b]
-                  sm:text-[11px]
-                "
-              >
-                Restaurant
-              </p>
+          <SettingsSection title="Restaurant">
+            <div className="space-y-4">
 
-              <h2
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  tracking-[-0.025em]
-                  text-[#181512]
-                "
-              >
-                Details
-              </h2>
+              <InputField
+                label="Restaurant name"
+                value={name}
+                onChange={setName}
+                placeholder="Restaurant name"
+              />
+
+              <TextareaField
+                label="Description"
+                value={description}
+                onChange={setDescription}
+                placeholder="Tell customers about your restaurant"
+              />
+
             </div>
+          </SettingsSection>
 
-            <div
-              className="
-                overflow-hidden
-                rounded-[22px]
-                border
-                border-black/[0.05]
-                bg-white
-                sm:rounded-[24px]
-              "
-            >
-              <div className="p-4 sm:p-6">
-                <label
-                  htmlFor="restaurant-name"
-                  className="
-                    block
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.14em]
-                    text-[#aaa39b]
-                    sm:text-[11px]
-                  "
-                >
-                  Restaurant name
-                </label>
+          <SettingsSection title="Contact">
+            <div className="grid gap-4 sm:grid-cols-2">
 
-                <input
-                  id="restaurant-name"
-                  type="text"
-                  value={name}
-                  onChange={(event) =>
-                    setName(event.target.value)
-                  }
-                  disabled={saving}
-                  required
-                  maxLength={200}
-                  className="
-                    mt-2
-                    w-full
-                    rounded-2xl
-                    border
-                    border-gray-200
-                    bg-gray-50
-                    px-4
-                    py-3.5
-                    text-[15px]
-                    font-medium
-                    text-gray-950
-                    outline-none
-                    transition
-                    focus:border-gray-400
-                    focus:bg-white
-                    focus:ring-4
-                    focus:ring-gray-950/5
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                />
-              </div>
+              <InputField
+                label="Phone"
+                value={phone}
+                onChange={setPhone}
+                placeholder="+91..."
+                type="tel"
+              />
 
-              <div className="h-px bg-black/[0.05]" />
+              <InputField
+                label="Email"
+                value={email}
+                onChange={setEmail}
+                placeholder="restaurant@example.com"
+                type="email"
+              />
 
-              <div className="p-4 sm:p-6">
-                <label
-                  htmlFor="restaurant-description"
-                  className="
-                    block
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.14em]
-                    text-[#aaa39b]
-                    sm:text-[11px]
-                  "
-                >
-                  Description
-                </label>
-
-                <textarea
-                  id="restaurant-description"
-                  value={description}
-                  onChange={(event) =>
-                    setDescription(event.target.value)
-                  }
-                  disabled={saving}
-                  rows={4}
-                  className="
-                    mt-2
-                    w-full
-                    resize-y
-                    rounded-2xl
-                    border
-                    border-gray-200
-                    bg-gray-50
-                    px-4
-                    py-3.5
-                    text-[15px]
-                    leading-6
-                    text-gray-950
-                    outline-none
-                    transition
-                    focus:border-gray-400
-                    focus:bg-white
-                    focus:ring-4
-                    focus:ring-gray-950/5
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                  placeholder="Tell customers a little about your restaurant..."
-                />
-              </div>
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="mt-9 sm:mt-10">
-            <div className="mb-4">
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#aaa39b]
-                  sm:text-[11px]
-                "
-              >
-                Contact
-              </p>
+          <SettingsSection title="Location">
+            <InputField
+              label="Address"
+              value={address}
+              onChange={setAddress}
+              placeholder="Restaurant address"
+            />
+          </SettingsSection>
 
-              <h2
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  tracking-[-0.025em]
-                  text-[#181512]
-                "
-              >
-                Contact information
-              </h2>
-            </div>
+          <SettingsSection title="Opening hours">
+            <TextareaField
+              label="Hours"
+              value={openingHours}
+              onChange={setOpeningHours}
+              placeholder={`Mon - Sun
+10:00 AM - 11:00 PM`}
+            />
+          </SettingsSection>
 
-            <div
-              className="
-                overflow-hidden
-                rounded-[22px]
-                border
-                border-black/[0.05]
-                bg-white
-                sm:rounded-[24px]
-              "
-            >
-              <div className="grid sm:grid-cols-2">
-                <div className="p-4 sm:p-6">
-                  <label
-                    htmlFor="restaurant-phone"
-                    className="
-                      block
-                      text-[10px]
-                      font-bold
-                      uppercase
-                      tracking-[0.14em]
-                      text-[#aaa39b]
-                      sm:text-[11px]
-                    "
-                  >
-                    Phone
-                  </label>
+        </div>
+      </div>
 
-                  <input
-                    id="restaurant-phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(event) =>
-                      setPhone(event.target.value)
-                    }
-                    disabled={saving}
-                    maxLength={30}
-                    className="
-                      mt-2
-                      w-full
-                      rounded-2xl
-                      border
-                      border-gray-200
-                      bg-gray-50
-                      px-4
-                      py-3.5
-                      text-[15px]
-                      text-gray-950
-                      outline-none
-                      transition
-                      focus:border-gray-400
-                      focus:bg-white
-                      focus:ring-4
-                      focus:ring-gray-950/5
-                      disabled:cursor-not-allowed
-                      disabled:opacity-60
-                    "
-                    placeholder="+91 98765 43210"
-                  />
-                </div>
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-3xl gap-2">
 
-                <div
-                  className="
-                    border-t
-                    border-black/[0.05]
-                    p-4
-                    sm:border-l
-                    sm:border-t-0
-                    sm:p-6
-                  "
-                >
-                  <label
-                    htmlFor="restaurant-email"
-                    className="
-                      block
-                      text-[10px]
-                      font-bold
-                      uppercase
-                      tracking-[0.14em]
-                      text-[#aaa39b]
-                      sm:text-[11px]
-                    "
-                  >
-                    Email
-                  </label>
-
-                  <input
-                    id="restaurant-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                      setEmail(event.target.value)
-                    }
-                    disabled={saving}
-                    className="
-                      mt-2
-                      w-full
-                      rounded-2xl
-                      border
-                      border-gray-200
-                      bg-gray-50
-                      px-4
-                      py-3.5
-                      text-[15px]
-                      text-gray-950
-                      outline-none
-                      transition
-                      focus:border-gray-400
-                      focus:bg-white
-                      focus:ring-4
-                      focus:ring-gray-950/5
-                      disabled:cursor-not-allowed
-                      disabled:opacity-60
-                    "
-                    placeholder="restaurant@example.com"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-9 sm:mt-10">
-            <div className="mb-4">
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#aaa39b]
-                  sm:text-[11px]
-                "
-              >
-                Restaurant information
-              </p>
-
-              <h2
-                className="
-                  mt-1
-                  text-lg
-                  font-semibold
-                  tracking-[-0.025em]
-                  text-[#181512]
-                "
-              >
-                Location & hours
-              </h2>
-            </div>
-
-            <div
-              className="
-                overflow-hidden
-                rounded-[22px]
-                border
-                border-black/[0.05]
-                bg-white
-                sm:rounded-[24px]
-              "
-            >
-              <div className="p-4 sm:p-6">
-                <label
-                  htmlFor="restaurant-address"
-                  className="
-                    block
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.14em]
-                    text-[#aaa39b]
-                    sm:text-[11px]
-                  "
-                >
-                  Address
-                </label>
-
-                <textarea
-                  id="restaurant-address"
-                  value={address}
-                  onChange={(event) =>
-                    setAddress(event.target.value)
-                  }
-                  disabled={saving}
-                  rows={3}
-                  className="
-                    mt-2
-                    w-full
-                    resize-y
-                    rounded-2xl
-                    border
-                    border-gray-200
-                    bg-gray-50
-                    px-4
-                    py-3.5
-                    text-[15px]
-                    leading-6
-                    text-gray-950
-                    outline-none
-                    transition
-                    focus:border-gray-400
-                    focus:bg-white
-                    focus:ring-4
-                    focus:ring-gray-950/5
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                  placeholder="Restaurant address"
-                />
-              </div>
-
-              <div className="h-px bg-black/[0.05]" />
-
-              <div className="p-4 sm:p-6">
-                <label
-                  htmlFor="restaurant-opening-hours"
-                  className="
-                    block
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.14em]
-                    text-[#aaa39b]
-                    sm:text-[11px]
-                  "
-                >
-                  Opening hours
-                </label>
-
-                <textarea
-                  id="restaurant-opening-hours"
-                  value={openingHours}
-                  onChange={(event) =>
-                    setOpeningHours(event.target.value)
-                  }
-                  disabled={saving}
-                  rows={3}
-                  className="
-                    mt-2
-                    w-full
-                    resize-y
-                    rounded-2xl
-                    border
-                    border-gray-200
-                    bg-gray-50
-                    px-4
-                    py-3.5
-                    text-[15px]
-                    leading-6
-                    text-gray-950
-                    outline-none
-                    transition
-                    focus:border-gray-400
-                    focus:bg-white
-                    focus:ring-4
-                    focus:ring-gray-950/5
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                  placeholder={"Monday - Sunday\n11:00 AM - 11:00 PM"}
-                />
-              </div>
-            </div>
-          </section>
-
-          <div className="mt-7 sm:mt-8">
-            {error && (
-              <div
-                className="
-                  rounded-2xl
-                  border
-                  border-red-200
-                  bg-red-50
-                  px-4
-                  py-3
-                  text-sm
-                  leading-6
-                  text-red-700
-                "
-              >
-                {error}
-              </div>
-            )}
-
-            {success && !error && (
-              <div
-                className="
-                  rounded-2xl
-                  border
-                  border-emerald-200
-                  bg-emerald-50
-                  px-4
-                  py-3
-                  text-sm
-                  leading-6
-                  text-emerald-700
-                "
-              >
-                {success}
-              </div>
-            )}
-          </div>
-
-          <div
-            className="
-              mt-5
-              flex
-              flex-col-reverse
-              gap-3
-              sm:flex-row
-              sm:items-center
-              sm:justify-end
-            "
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={saving}
+            className="h-11 flex-1 rounded-xl border border-neutral-200 bg-white text-sm font-medium text-neutral-700 transition active:scale-[0.98] disabled:opacity-50"
           >
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/dashboard/restaurants/${restaurantSlug}`
-                )
-              }
-              disabled={saving}
-              className="
-                w-full
-                rounded-2xl
-                border
-                border-black/[0.08]
-                bg-white
-                px-5
-                py-3.5
-                text-sm
-                font-semibold
-                text-gray-700
-                transition
-                hover:bg-gray-50
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-                sm:w-auto
-              "
-            >
-              Cancel
-            </button>
+            Cancel
+          </button>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="
-                w-full
-                rounded-2xl
-                bg-gray-950
-                px-6
-                py-3.5
-                text-sm
-                font-semibold
-                text-white
-                shadow-[0_10px_30px_rgba(0,0,0,0.12)]
-                transition
-                hover:bg-gray-800
-                active:scale-[0.98]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-                sm:w-auto
-              "
-            >
-              {saving
-                ? "Saving..."
-                : "Save changes"}
-            </button>
-          </div>
-        </form>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-neutral-950 text-sm font-medium text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <SaveIcon />
+
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+
+        </div>
       </div>
     </main>
   );

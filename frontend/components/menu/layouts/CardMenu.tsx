@@ -38,7 +38,9 @@ function formatPrice(
   };
 
   if (priceRange && priceMin && priceMax) {
-    return `₹${cleanPrice(priceMin)} - ₹${cleanPrice(priceMax)}`;
+    return `₹${cleanPrice(priceMin)} - ₹${cleanPrice(
+      priceMax
+    )}`;
   }
 
   if (price) {
@@ -226,7 +228,13 @@ export default function CardMenu({
 
   return (
     <section
-      className={`w-full overflow-hidden transition-colors duration-500 ${styles.page}`}
+      className={`
+        w-full
+        overflow-hidden
+        transition-colors
+        duration-500
+        ${styles.page}
+      `}
     >
       <div
         ref={containerRef}
@@ -246,7 +254,11 @@ export default function CardMenu({
         onTouchCancel={handleTouchCancel}
       >
         <div
-          className="flex w-full items-start"
+          className="
+            flex
+            w-full
+            items-start
+          "
           style={{
             transform: `translate3d(${translate}%, 0, 0)`,
             transition:
@@ -265,109 +277,31 @@ export default function CardMenu({
                   categoryRefs.current[index] =
                     element;
                 }}
-                className="w-full shrink-0 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12"
+                className="
+                  w-full
+                  shrink-0
+                  px-3
+                  pb-8
+                  pt-6
+                  sm:px-5
+                  sm:pb-10
+                  sm:pt-8
+                  lg:px-8
+                  lg:pb-12
+                  lg:pt-10
+                "
               >
                 <div className="mx-auto max-w-6xl">
-                  <div className="mb-7 sm:mb-9">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-[0.22em] ${styles.categoryDescription}`}
-                      >
-                        {String(
-                          index + 1
-                        ).padStart(2, "0")}
-                      </span>
-
-                      <span
-                        className={`h-px w-8 ${styles.categoryBorder.replace(
-                          "border-",
-                          "bg-"
-                        )}`}
-                      />
-
-                      <span
-                        className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${styles.categoryDescription}`}
-                      >
-                        Menu
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex items-end justify-between gap-4">
-                      <h2
-                        className={`
-                          text-2xl
-                          font-bold
-                          tracking-tight
-                          sm:text-3xl
-                          md:text-4xl
-                          ${styles.categoryTitle}
-                        `}
-                      >
-                        {category.name}
-                      </h2>
-
-                      <span
-                        className={`
-                          hidden
-                          shrink-0
-                          text-[10px]
-                          font-medium
-                          uppercase
-                          tracking-[0.18em]
-                          sm:block
-                          ${styles.categoryDescription}
-                        `}
-                      >
-                        {category.items.length}{" "}
-                        {category.items.length ===
-                        1
-                          ? "Item"
-                          : "Items"}
-                      </span>
-                    </div>
-
-                    {category.description && (
-                      <p
-                        className={`
-                          mt-2
-                          max-w-2xl
-                          text-sm
-                          leading-6
-                          sm:mt-3
-                          sm:text-base
-                          ${styles.categoryDescription}
-                        `}
-                      >
-                        {
-                          category.description
-                        }
-                      </p>
-                    )}
-
-                    <div className="mt-5 flex items-center gap-2 sm:mt-6">
-                      <span
-                        className={`
-                          h-1.5
-                          w-1.5
-                          rounded-full
-                          ${styles.navUnderline}
-                        `}
-                      />
-
-                      <span
-                        className={`
-                          h-px
-                          flex-1
-                          ${styles.categoryBorder.replace(
-                            "border-",
-                            "bg-"
-                          )}
-                        `}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+                  <div
+                    className="
+                      grid
+                      grid-cols-1
+                      gap-3
+                      sm:grid-cols-2
+                      sm:gap-4
+                      lg:grid-cols-3
+                    "
+                  >
                     {category.items.map(
                       (item) => {
                         const itemPrice =
@@ -387,19 +321,27 @@ export default function CardMenu({
                           <article
                             key={item.id}
                             className={`
+                              group
                               overflow-hidden
-                              rounded-2xl
+                              rounded-[20px]
                               border
+                              shadow-[0_4px_18px_rgba(0,0,0,0.07),0_0_12px_rgba(0,0,0,0.035)]
                               transition-all
                               duration-300
+                              hover:-translate-y-[2px]
+                              hover:shadow-[0_10px_28px_rgba(0,0,0,0.12),0_0_18px_rgba(0,0,0,0.06)]
                               ${styles.card}
                             `}
                           >
                             {imageUrl ? (
                               <div
                                 className={`
-                                  aspect-[4/3]
+                                  relative
+                                  h-48
+                                  w-full
                                   overflow-hidden
+                                  sm:h-52
+                                  lg:h-56
                                   ${styles.imageBackground}
                                 `}
                               >
@@ -408,24 +350,57 @@ export default function CardMenu({
                                   alt={item.name}
                                   draggable={false}
                                   className="
+                                    block
                                     h-full
                                     w-full
                                     select-none
                                     object-cover
-                                    transition
-                                    duration-300
-                                    hover:scale-105
+                                    transition-transform
+                                    duration-500
+                                    group-hover:scale-[1.035]
                                   "
                                 />
+
+                                {!item.available && (
+                                  <div
+                                    className="
+                                      absolute
+                                      inset-0
+                                      flex
+                                      items-center
+                                      justify-center
+                                      bg-black/35
+                                    "
+                                  >
+                                    <span
+                                      className="
+                                        rounded-full
+                                        bg-white/95
+                                        px-3
+                                        py-1.5
+                                        text-[10px]
+                                        font-bold
+                                        uppercase
+                                        tracking-wide
+                                        text-gray-800
+                                      "
+                                    >
+                                      Unavailable
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div
                                 className={`
                                   flex
-                                  aspect-[4/3]
+                                  h-48
+                                  w-full
                                   items-center
                                   justify-center
-                                  text-sm
+                                  text-xs
+                                  sm:h-52
+                                  lg:h-56
                                   ${styles.imageBackground}
                                   ${styles.imagePlaceholder}
                                 `}
@@ -434,32 +409,58 @@ export default function CardMenu({
                               </div>
                             )}
 
-                            <div className="p-5">
+                            <div className="p-4 sm:p-5">
                               <div className="flex items-start justify-between gap-3">
-                                <h3
-                                  className={`text-lg font-semibold ${styles.itemName}`}
-                                >
-                                  {item.name}
-                                </h3>
+                                <div className="min-w-0">
+                                  <h3
+                                    className={`
+                                      text-[16px]
+                                      font-semibold
+                                      leading-5
+                                      tracking-[-0.015em]
+                                      sm:text-[17px]
+                                      ${styles.itemName}
+                                    `}
+                                  >
+                                    {item.name}
+                                  </h3>
+
+                                  {item.description && (
+                                    <p
+                                      className={`
+                                        mt-1.5
+                                        line-clamp-2
+                                        text-[12px]
+                                        leading-5
+                                        sm:text-[13px]
+                                        ${styles.description}
+                                      `}
+                                    >
+                                      {
+                                        item.description
+                                      }
+                                    </p>
+                                  )}
+                                </div>
 
                                 {item.vegetarian && (
                                   <span
                                     className={`
-                                      mt-1
-                                      h-4
-                                      w-4
+                                      mt-0.5
+                                      flex
+                                      h-5
+                                      w-5
                                       shrink-0
-                                      rounded-sm
-                                      border-2
+                                      items-center
+                                      justify-center
+                                      rounded-[5px]
+                                      border
                                       ${styles.vegetarianBorder}
                                     `}
                                     title="Vegetarian"
                                   >
                                     <span
                                       className={`
-                                        mx-auto
-                                        mt-[3px]
-                                        block
                                         h-1.5
                                         w-1.5
                                         rounded-full
@@ -470,50 +471,24 @@ export default function CardMenu({
                                 )}
                               </div>
 
-                              {item.description && (
-                                <p
-                                  className={`
-                                    mt-2
-                                    line-clamp-2
-                                    text-sm
-                                    leading-6
-                                    ${styles.description}
-                                  `}
-                                >
-                                  {
-                                    item.description
-                                  }
-                                </p>
-                              )}
-
                               {itemPrice && (
-                                <div className="mt-4">
+                                <div className="mt-3">
                                   <span
                                     className={`
-                                      text-lg
+                                      text-[17px]
                                       font-bold
+                                      tracking-[-0.02em]
                                       ${styles.price}
                                     `}
                                   >
-                                    {
-                                      itemPrice
-                                    }
+                                    {itemPrice}
                                   </span>
                                 </div>
                               )}
 
-                              {item.variants
-                                .length >
+                              {item.variants.length >
                                 0 && (
-                                <div
-                                  className={`
-                                    mt-4
-                                    space-y-2
-                                    border-t
-                                    pt-4
-                                    ${styles.variantBorder}
-                                  `}
-                                >
+                                <div className="mt-4 space-y-1.5">
                                   {item.variants.map(
                                     (
                                       variant
@@ -531,21 +506,48 @@ export default function CardMenu({
                                           key={
                                             variant.id
                                           }
-                                          className="flex items-center justify-between gap-3 text-sm"
+                                          className="
+                                            flex
+                                            min-h-9
+                                            items-center
+                                            justify-between
+                                            gap-3
+                                            rounded-xl
+                                            px-3
+                                            py-1.5
+                                          "
                                         >
-                                          <span
-                                            className={
-                                              styles.variantName
-                                            }
-                                          >
-                                            {
-                                              variant.name
-                                            }
-                                          </span>
+                                          <div className="flex min-w-0 items-center gap-2">
+                                            <span
+                                              className={`
+                                                h-1
+                                                w-1
+                                                shrink-0
+                                                rounded-full
+                                                opacity-50
+                                                ${styles.navUnderline}
+                                              `}
+                                            />
+
+                                            <span
+                                              className={`
+                                                truncate
+                                                text-[12px]
+                                                font-medium
+                                                ${styles.variantName}
+                                              `}
+                                            >
+                                              {
+                                                variant.name
+                                              }
+                                            </span>
+                                          </div>
 
                                           {variantPrice && (
                                             <span
                                               className={`
+                                                shrink-0
+                                                text-[12px]
                                                 font-semibold
                                                 ${styles.variantPrice}
                                               `}

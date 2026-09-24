@@ -1,7 +1,6 @@
 import type { MenuCategory, MenuTheme } from "@/types/menu";
 import ClassicMenu from "@/components/menu/layouts/ClassicMenu";
 import CardMenu from "@/components/menu/layouts/CardMenu";
-import ShowcaseMenu from "@/components/menu/layouts/ShowcaseMenu";
 
 interface MenuRendererProps {
   layout: "classic" | "cards" | "showcase";
@@ -26,14 +25,6 @@ export default function MenuRenderer({
           categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={onCategoryChange}
-        />
-      );
-
-    case "showcase":
-      return (
-        <ShowcaseMenu
-          theme={theme}
-          categories={categories}
         />
       );
 
